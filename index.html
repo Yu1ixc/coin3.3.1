@@ -7,8 +7,6 @@
   <style>
     :root{
       --bg: #f5f7fb;
-      --panel: #ffffff;
-      --panel2: #fbfcff;
       --text: #111827;
       --muted: rgba(17,24,39,.68);
       --line: rgba(17,24,39,.12);
@@ -19,7 +17,7 @@
       --hard:#dc2626;
       --accent:#2563eb;
 
-      /* 緊湊間距 */
+      /* ✅ 間距壓很緊 */
       --gap: 8px;
       --tight: 2px;
       --pad: 6px;
@@ -27,8 +25,13 @@
 
       --cardSize: 165px;
       --slotH: min(195px, 24vh);
+
       --topbarH: 64px;
-      --pagePadX: 18px; /* ✅ 跟 topbar 同左右 padding，才能對齊 */
+      --pagePadX: 18px;
+
+      /* ✅ 下方牌區固定高度：保證「送出答案」永遠完整顯示 */
+      --bottomH: calc(var(--cardSize) + 14px); /* card + padding/線條空間 */
+      --submitH: 54px;
     }
 
     *{ box-sizing:border-box; }
@@ -45,25 +48,21 @@
     }
     button{ font:inherit; }
 
-    /* Top bar：✅ 左=遊戲紀錄，右=退出遊戲 */
+    /* Topbar: 左=遊戲紀錄，右=退出 */
     .topbar{
-      position: fixed;
-      top: 0; left: 0; right: 0;
+      position:fixed;
+      inset: 0 0 auto 0;
       height: var(--topbarH);
       display:flex;
       align-items:center;
-      justify-content: space-between;
+      justify-content:space-between;
       padding: 0 var(--pagePadX);
       background: rgba(255,255,255,.88);
       border-bottom: 1px solid var(--line);
       backdrop-filter: blur(10px);
       z-index: 20;
     }
-    .topLeft, .topRight{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-    }
+    .topLeft,.topRight{ display:flex; gap:10px; align-items:center; }
     .ghost{
       border: 1px solid var(--line);
       background: rgba(17,24,39,.04);
@@ -80,39 +79,36 @@
       color: #991b1b;
     }
 
-    /* Page: ✅ 置頂且與 topbar 同左右邊界 */
     main{
       padding-top: var(--topbarH);
       height: calc(100vh - var(--topbarH));
     }
     .page{
-      height: 100%;
-      padding: 0 var(--pagePadX); /* ✅ 內容左右跟 topbar 對齊 */
+      height:100%;
+      padding: 0 var(--pagePadX);
     }
     .container{
-      height: 100%;
-      width: 100%;
-      max-width: 1020px; /* 想要寬一點就改大 */
+      height:100%;
+      max-width: 1020px;
       margin: 0 auto;
     }
 
-    /* Home（維持有框框，遊戲才拿掉外框） */
+    /* Home：保留框 */
     .panel{
-      background: #fff;
+      height:100%;
+      background:#fff;
       border: 1px solid var(--line);
       border-radius: 18px;
       box-shadow: var(--shadow);
       overflow:hidden;
-      height: 100%;
     }
-
     .home{
       padding: 34px 22px 30px;
-      height: 100%;
+      height:100%;
       display:flex;
       flex-direction:column;
       align-items:center;
-      justify-content: space-between;
+      justify-content:space-between;
       text-align:center;
       gap: 22px;
     }
@@ -169,31 +165,21 @@
     .primary:disabled{ opacity: .45; cursor: not-allowed; transform: none; box-shadow:none; }
     .primary:not(:disabled):hover{ transform: translateY(-1px); }
 
-    /* ✅ Game：外框拿掉（不再有 panel），直接貼頂欄下方 */
-    .gameRoot{
-      height: 100%;
-      width: 100%;
-      /* 不要 border / shadow / radius，讓它像「頁面本體」 */
-    }
+    /* Game：無外框 */
+    .gameRoot{ height:100%; width:100%; }
     .game{
-      height: 100%;
-      padding: 0;                 /* ✅ 上方不留白 */
+      height:100%;
       display:flex;
       flex-direction:column;
-      gap: var(--tight);
+      gap: var(--tight);   /* ✅ HUD ↔ board 幾乎貼合 */
+      padding: 0;
     }
 
-    .hud{
-      display:flex;
-      align-items:stretch;
-      justify-content:space-between;
-      flex-wrap: wrap;
-      gap: 0;
-    }
+    .hud{ display:flex; }
     .hudCard{
-      width: 100%;
+      width:100%;
       border: 1px solid var(--line);
-      border-radius: 18px;        /* ✅ HUD 自己保留圓角，但不是外框 */
+      border-radius: 18px;
       padding: var(--hudpad);
       background: rgba(255,255,255,.92);
       display:flex;
@@ -202,9 +188,10 @@
       gap: 12px;
       box-shadow: 0 10px 24px rgba(17,24,39,.10);
     }
-    .req{ display:grid; gap: 2px; }
+    .req{ display:grid; gap:2px; }
     .reqTitle{ margin:0; font-size: 25px; font-weight: 950; letter-spacing:.4px; }
     .reqMeta{ margin:0; color: var(--muted); font-size: 16px; font-weight: 900; }
+
     .timer{
       border: 1px solid var(--line);
       background: #fff;
@@ -218,19 +205,22 @@
     }
     .timer span{ font-size: 26px; }
 
+    /* ✅ 關鍵：上方自動撐滿，下方固定高度，避免按鈕被裁切 */
     .board{
       flex: 1 1 auto;
       min-height: 0;
       display:grid;
-      grid-template-rows: 64% 36%;
-      gap: var(--tight);
+      grid-template-rows: 1fr var(--bottomH);
+      gap: var(--tight); /* ✅ 上下區幾乎貼合 */
     }
+
+    /* ✅ 不要 overflow hidden，避免內容被切掉 */
     .topArea, .bottomArea{
       border: 1px solid var(--line);
       border-radius: 18px;
       background: rgba(255,255,255,.92);
       padding: var(--pad);
-      overflow:hidden;
+      overflow: visible;
       box-shadow: 0 10px 24px rgba(17,24,39,.08);
     }
 
@@ -238,7 +228,7 @@
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: var(--gap);
-      align-items: center;
+      align-items:center;
     }
     .slot{
       height: var(--slotH);
@@ -271,13 +261,15 @@
 
     .bottomArea{
       display:flex;
-      flex-direction:column;
       align-items:center;
       justify-content:center;
-      gap: var(--tight);
+      padding: var(--pad);
     }
+
+    /* ✅ 下方牌區就是唯一容器：送出按鈕也會在這個 grid 裡 */
     .cardGrid{
       width: 100%;
+      height: 100%;
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: var(--gap);
@@ -290,6 +282,7 @@
       display:grid;
       place-items:center;
     }
+
     .card, .placeholder{
       width: var(--cardSize);
       height: var(--cardSize);
@@ -314,9 +307,17 @@
       background: rgba(17,24,39,.02);
     }
 
+    /* ✅ 送出按鈕在牌區格子裡，跨 4 欄 */
+    .submitCell{
+      grid-column: 1 / -1;
+      width: 100%;
+      height: var(--cardSize);
+      display:grid;
+      place-items:center;
+    }
     .submitBtn{
-      width: min(460px, 94%);
-      height: 54px;
+      width: min(520px, 100%);
+      height: var(--submitH);
       border-radius: 16px;
       border: none;
       background: var(--accent);
@@ -347,7 +348,7 @@
     }
     .toast.show{ display:block; }
 
-    /* Modals */
+    /* Modals（略） */
     .overlay{
       position: fixed;
       inset: 0;
@@ -377,17 +378,8 @@
       justify-content:space-between;
       gap: 10px;
     }
-    .modalHeader h3{
-      margin:0;
-      font-size: 20px;
-      font-weight: 950;
-      letter-spacing:.4px;
-    }
-    .modalBody{
-      padding: 18px;
-      overflow:auto;
-      font-size: 16px;
-    }
+    .modalHeader h3{ margin:0; font-size: 20px; font-weight: 950; letter-spacing:.4px; }
+    .modalBody{ padding: 18px; overflow:auto; font-size: 16px; }
     .modalFooter{
       padding: 14px 18px;
       border-top: 1px solid var(--line);
@@ -417,50 +409,28 @@
       display:grid;
       gap: 8px;
     }
-    .recordTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+    .recordTop{ display:flex; align-items:center; justify-content:space-between; gap: 10px; flex-wrap: wrap; }
     .badge{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 8px 12px; border-radius: 999px;
       border: 1px solid var(--line);
       background: rgba(17,24,39,.03);
-      font-size: 14px;
-      color: var(--muted);
+      font-size: 14px; color: var(--muted);
       font-weight: 950;
     }
     .badge .bDot{ width: 10px; height: 10px; border-radius: 999px; }
-    .times{
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      font-weight: 900;
-    }
-    .empty{
-      color: var(--muted);
-      text-align:center;
-      padding: 26px 0;
-      line-height: 1.7;
-      font-weight: 950;
-    }
+    .times{ color: var(--muted); font-size: 14px; line-height: 1.6; white-space: pre-wrap; font-weight: 900; }
+    .empty{ color: var(--muted); text-align:center; padding: 26px 0; line-height: 1.7; font-weight: 950; }
     .hr{ height:1px; background: var(--line); margin: 14px 0; }
     .small{ font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 850; }
 
     @media (max-width: 860px){
-      :root{ --cardSize: 150px; }
+      :root{ --cardSize: 150px; --bottomH: calc(var(--cardSize) + 14px); }
       .reqTitle{ font-size: 22px; }
       .card{ font-size: 70px; }
     }
     @media (max-width: 640px){
-      :root{ --cardSize: 120px; --gap: 8px; }
+      :root{ --cardSize: 120px; --gap: 8px; --bottomH: calc(var(--cardSize) + 14px); }
       .card{ font-size: 58px; }
       .hudCard{ padding: 8px 10px; }
     }
@@ -468,7 +438,6 @@
 </head>
 
 <body>
-  <!-- ✅ 左上：遊戲紀錄｜右上：退出遊戲 -->
   <div class="topbar">
     <div class="topLeft">
       <button class="ghost" id="openRecordsBtn">遊戲紀錄</button>
@@ -482,7 +451,6 @@
     <div class="page">
       <div class="container">
 
-        <!-- Home（保留外框） -->
         <div class="panel" id="screenHome">
           <section class="home">
             <div class="title">排排看小遊戲</div>
@@ -508,7 +476,6 @@
           </section>
         </div>
 
-        <!-- ✅ Game（無外框，直接像頁面內容） -->
         <div class="gameRoot" id="screenGame" style="display:none;">
           <section class="game">
             <div class="hud">
@@ -525,7 +492,6 @@
               <div class="topArea" id="topArea"></div>
               <div class="bottomArea">
                 <div class="cardGrid" id="cardGrid"></div>
-                <button class="submitBtn" id="submitBtn" type="button" style="display:none;">送出答案</button>
               </div>
             </div>
           </section>
@@ -580,7 +546,7 @@
     hard: { label: "困難", times: [20,20,20],    color: getComputedStyle(document.documentElement).getPropertyValue('--hard').trim() },
   };
   const ROUNDS = 3;
-  const STORAGE_KEY = "ppk_records_v6";
+  const STORAGE_KEY = "ppk_records_v7";
 
   const screenHome = document.getElementById("screenHome");
   const screenGame = document.getElementById("screenGame");
@@ -596,7 +562,6 @@
 
   const topArea = document.getElementById("topArea");
   const cardGrid = document.getElementById("cardGrid");
-  const submitBtn = document.getElementById("submitBtn");
 
   const toast = document.getElementById("toast");
 
@@ -722,6 +687,7 @@
     }, 200);
   }
 
+  // 丟到有牌的格子：舊牌退回下方
   function placeDigitIntoSlot(digit, slotIndex){
     if(game.used.has(digit)) return;
 
@@ -760,10 +726,7 @@
         slot.appendChild(card);
       }
 
-      slot.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        slot.classList.add("over");
-      });
+      slot.addEventListener("dragover", (e) => { e.preventDefault(); slot.classList.add("over"); });
       slot.addEventListener("dragleave", () => slot.classList.remove("over"));
       slot.addEventListener("drop", (e) => {
         e.preventDefault();
@@ -780,8 +743,53 @@
     }
   }
 
+  function submitAnswer(){
+    const ans = currentAnswerFromSlots();
+    if(ans === null){
+      showToast("還沒放滿 4 張卡牌");
+      return;
+    }
+
+    const target = computeTarget(game.digits, game.requirement);
+    const usedSeconds = game.roundLimit - Math.max(0, game.remain);
+
+    if(ans === target){
+      game.timesUsed.push(usedSeconds);
+      stopTimer();
+
+      if(game.roundIndex + 1 < ROUNDS){
+        showToast("答對，進入下一回合");
+        setTimeout(() => startRound(game.roundIndex + 1), 420);
+      }else{
+        endGame(true, "全部答對");
+      }
+    }else{
+      endGame(false, "答錯");
+    }
+  }
+
+  // ✅ 下方牌區渲染：四張都放上去後，改成「一條送出按鈕」出現在同一區塊
   function renderBottom(){
     cardGrid.innerHTML = "";
+
+    const allPlaced = game.slots.every(v => v !== null);
+
+    if(allPlaced){
+      const submitCell = document.createElement("div");
+      submitCell.className = "submitCell";
+
+      const btn = document.createElement("button");
+      btn.className = "submitBtn";
+      btn.type = "button";
+      btn.textContent = "送出答案";
+      btn.addEventListener("click", submitAnswer);
+
+      submitCell.appendChild(btn);
+      cardGrid.appendChild(submitCell);
+      return;
+    }
+
+    // 牌未放滿：固定四格（被用掉就顯示 placeholder，不位移）
     for(let i=0;i<4;i++){
       const d = game.digits[i];
       const cell = document.createElement("div");
@@ -804,9 +812,6 @@
       }
       cardGrid.appendChild(cell);
     }
-
-    const allPlaced = game.slots.every(v => v !== null);
-    submitBtn.style.display = allPlaced ? "" : "none";
   }
 
   function renderHUD(){
@@ -835,49 +840,21 @@
     renderAll();
   }
 
-  function submitAnswer(){
-    const ans = currentAnswerFromSlots();
-    if(ans === null){
-      showToast("還沒放滿 4 張卡牌");
-      return;
-    }
-
-    const target = computeTarget(game.digits, game.requirement);
-    const usedSeconds = game.roundLimit - Math.max(0, game.remain);
-
-    if(ans === target){
-      game.timesUsed.push(usedSeconds);
-      stopTimer();
-
-      if(game.roundIndex + 1 < ROUNDS){
-        showToast("答對，進入下一回合");
-        setTimeout(() => startRound(game.roundIndex + 1), 420);
-      }else{
-        endGame(true, "全部答對");
-      }
-    }else{
-      endGame(false, "答錯");
-    }
-  }
-
+  /* Records / Result（保持不變） */
   function loadRecords(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
-    }catch{
-      return [];
-    }
+    }catch{ return []; }
   }
   function saveRecord(rec){
     const list = loadRecords();
     list.unshift(rec);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 50)));
   }
-  function clearRecords(){
-    localStorage.removeItem(STORAGE_KEY);
-  }
+  function clearRecords(){ localStorage.removeItem(STORAGE_KEY); }
 
   function badgeHTML(diffKey){
     const d = DIFF[diffKey];
@@ -996,15 +973,11 @@
     startGame(selectedDifficulty);
   });
 
-  submitBtn.addEventListener("click", submitAnswer);
-
   openRecordsBtn.addEventListener("click", openRecords);
   closeRecordsBtn.addEventListener("click", closeRecords);
   closeRecordsBtn2.addEventListener("click", closeRecords);
 
-  recordsOverlay.addEventListener("click", (e) => {
-    if(e.target === recordsOverlay) closeRecords();
-  });
+  recordsOverlay.addEventListener("click", (e) => { if(e.target === recordsOverlay) closeRecords(); });
 
   clearRecordsBtn.addEventListener("click", () => {
     clearRecords();
