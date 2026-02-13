@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>排排看小遊戲</title>
+  <title>排排看小遊戲</titleltitle>
   <style>
     :root{
       --bg: #f5f7fb;
@@ -17,7 +17,7 @@
       --hard:#dc2626;
       --accent:#2563eb;
 
-      /* ✅ 間距壓很緊 */
+      /* 緊湊間距 */
       --gap: 8px;
       --tight: 2px;
       --pad: 6px;
@@ -29,8 +29,8 @@
       --topbarH: 64px;
       --pagePadX: 18px;
 
-      /* ✅ 下方牌區固定高度：保證「送出答案」永遠完整顯示 */
-      --bottomH: calc(var(--cardSize) + 14px); /* card + padding/線條空間 */
+      /* 下方牌區固定高度：保證「送出答案」永遠完整顯示 */
+      --bottomH: calc(var(--cardSize) + 14px);
       --submitH: 54px;
     }
 
@@ -48,7 +48,7 @@
     }
     button{ font:inherit; }
 
-    /* Topbar: 左=遊戲紀錄，右=退出 */
+    /* ===== Topbar：去掉白底長條（透明） + 左遊戲紀錄 右退出 ===== */
     .topbar{
       position:fixed;
       inset: 0 0 auto 0;
@@ -57,9 +57,9 @@
       align-items:center;
       justify-content:space-between;
       padding: 0 var(--pagePadX);
-      background: rgba(255,255,255,.88);
-      border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(10px);
+      background: transparent;
+      border-bottom: none;
+      backdrop-filter: none;
       z-index: 20;
     }
     .topLeft,.topRight{ display:flex; gap:10px; align-items:center; }
@@ -93,14 +93,14 @@
       margin: 0 auto;
     }
 
-    /* Home：保留框 */
+    /* ===== Home：去掉中間大白底框 ===== */
     .panel{
       height:100%;
-      background:#fff;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      overflow:hidden;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
     }
     .home{
       padding: 34px 22px 30px;
@@ -127,6 +127,8 @@
       align-items:stretch;
       margin-top: 8px;
     }
+
+    /* 5. 難度按鈕：白底 + 對應色框 */
     .pill{
       min-width: 210px;
       padding: 18px 18px;
@@ -136,16 +138,21 @@
       gap: 10px;
       text-align:left;
       transition: transform .12s ease, filter .12s ease;
-      border: 1px solid var(--line);
-      background: rgba(17,24,39,.03);
+      background: rgba(255,255,255,.86);
+      border: 2px solid var(--line);
+      box-shadow: none;
     }
     .pill:hover{ transform: translateY(-2px); }
-    .pill[data-d="easy"]{ background: rgba(22,163,74,.22); border-color: rgba(22,163,74,.62); }
-    .pill[data-d="mid"] { background: rgba(202,138,4,.26); border-color: rgba(202,138,4,.64); }
-    .pill[data-d="hard"]{ background: rgba(220,38,38,.22); border-color: rgba(220,38,38,.64); }
+    .pill[data-d="easy"]{ border-color: var(--easy); }
+    .pill[data-d="mid"] { border-color: var(--mid); }
+    .pill[data-d="hard"]{ border-color: var(--hard); }
+
     .pill .name{ font-weight: 950; letter-spacing:.3px; font-size: 22px; }
     .pill .meta{ color: rgba(17,24,39,.76); font-size: 15px; line-height:1.4; font-weight: 850; }
-    .pill.selected{ outline: 3px solid rgba(37,99,235,.26); filter: saturate(1.15); }
+    .pill.selected{
+      outline: 3px solid rgba(37,99,235,.22);
+      filter: saturate(1.08);
+    }
 
     .startRow{ margin-top: 10px; display:flex; justify-content:center; }
     .primary{
@@ -165,13 +172,13 @@
     .primary:disabled{ opacity: .45; cursor: not-allowed; transform: none; box-shadow:none; }
     .primary:not(:disabled):hover{ transform: translateY(-1px); }
 
-    /* Game：無外框 */
+    /* ===== Game：無外框；去掉三塊白底（但保留細線框） ===== */
     .gameRoot{ height:100%; width:100%; }
     .game{
       height:100%;
       display:flex;
       flex-direction:column;
-      gap: var(--tight);   /* ✅ HUD ↔ board 幾乎貼合 */
+      gap: var(--tight);
       padding: 0;
     }
 
@@ -181,12 +188,12 @@
       border: 1px solid var(--line);
       border-radius: 18px;
       padding: var(--hudpad);
-      background: rgba(255,255,255,.92);
+      background: transparent;          /* 3. 去掉白底 */
+      box-shadow: none;                 /* 3. 去掉白底陰影感 */
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap: 12px;
-      box-shadow: 0 10px 24px rgba(17,24,39,.10);
     }
     .req{ display:grid; gap:2px; }
     .reqTitle{ margin:0; font-size: 25px; font-weight: 950; letter-spacing:.4px; }
@@ -194,34 +201,32 @@
 
     .timer{
       border: 1px solid var(--line);
-      background: #fff;
+      background: transparent;          /* 3. 去掉白底 */
       border-radius: 14px;
       padding: 8px 12px;
       min-width: 140px;
       text-align:center;
       font-weight: 950;
       letter-spacing:.5px;
-      box-shadow: 0 8px 20px rgba(17,24,39,.08);
+      box-shadow: none;
     }
     .timer span{ font-size: 26px; }
 
-    /* ✅ 關鍵：上方自動撐滿，下方固定高度，避免按鈕被裁切 */
     .board{
       flex: 1 1 auto;
       min-height: 0;
       display:grid;
       grid-template-rows: 1fr var(--bottomH);
-      gap: var(--tight); /* ✅ 上下區幾乎貼合 */
+      gap: var(--tight);
     }
 
-    /* ✅ 不要 overflow hidden，避免內容被切掉 */
     .topArea, .bottomArea{
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: rgba(255,255,255,.92);
+      background: transparent;          /* 3. 去掉白底 */
       padding: var(--pad);
       overflow: visible;
-      box-shadow: 0 10px 24px rgba(17,24,39,.08);
+      box-shadow: none;
     }
 
     .topArea{
@@ -230,6 +235,8 @@
       gap: var(--gap);
       align-items:center;
     }
+
+    /* 1. 卡牌不超出格子 */
     .slot{
       height: var(--slotH);
       border-radius: 18px;
@@ -239,24 +246,27 @@
       place-items:center;
       transition: border-color .12s ease, background .12s ease;
       user-select:none;
+      padding: 6px;
+      overflow: hidden;
     }
     .slot.over{ border-color: rgba(37,99,235,.75); background: rgba(37,99,235,.08); }
     .slotLabel{ color: rgba(17,24,39,.42); font-size: 15px; font-weight: 900; letter-spacing:.3px; }
 
     .slotCard{
-      width: var(--cardSize);
-      height: var(--cardSize);
-      max-width: 92%;
-      max-height: 86%;
+      width: min(var(--cardSize), 100%);
+      height: min(var(--cardSize), 100%);
+      max-width: 100%;
+      max-height: 100%;
       border-radius: 18px;
-      border: 1px solid rgba(17,24,39,.14);
-      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(245,247,251,1));
+      /* 6. 灰色細線條框 */
+      border: 1px solid rgba(17,24,39,.35);
+      background: rgba(255,255,255,.70);
       display:grid;
       place-items:center;
       font-size: clamp(56px, 7vw, 86px);
       font-weight: 950;
       cursor:pointer;
-      box-shadow: 0 16px 26px rgba(17,24,39,.16);
+      box-shadow: none;
     }
 
     .bottomArea{
@@ -265,8 +275,6 @@
       justify-content:center;
       padding: var(--pad);
     }
-
-    /* ✅ 下方牌區就是唯一容器：送出按鈕也會在這個 grid 裡 */
     .cardGrid{
       width: 100%;
       height: 100%;
@@ -283,6 +291,7 @@
       place-items:center;
     }
 
+    /* 6. 灰色細線條框（下方牌） */
     .card, .placeholder{
       width: var(--cardSize);
       height: var(--cardSize);
@@ -290,24 +299,24 @@
       border-radius: 18px;
     }
     .card{
-      border: 1px solid rgba(17,24,39,.14);
-      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(245,247,251,1));
+      border: 1px solid rgba(17,24,39,.35);
+      background: rgba(255,255,255,.70);
       display:grid;
       place-items:center;
       font-size: 78px;
       font-weight: 950;
       cursor: grab;
       user-select:none;
-      box-shadow: 0 16px 26px rgba(17,24,39,.16);
+      box-shadow: none;
       transition: transform .10s ease;
     }
     .card:active{ cursor: grabbing; transform: scale(.985); }
     .placeholder{
-      border: 2px dashed rgba(17,24,39,.16);
-      background: rgba(17,24,39,.02);
+      border: 1px dashed rgba(17,24,39,.25);
+      background: transparent;
     }
 
-    /* ✅ 送出按鈕在牌區格子裡，跨 4 欄 */
+    /* 送出答案在牌區格子裡，跨 4 欄 */
     .submitCell{
       grid-column: 1 / -1;
       width: 100%;
@@ -326,7 +335,7 @@
       letter-spacing: .7px;
       cursor:pointer;
       font-size: 20px;
-      box-shadow: 0 14px 28px rgba(37,99,235,.22);
+      box-shadow: 0 14px 28px rgba(37,99,235,.18);
     }
 
     .toast{
@@ -348,7 +357,7 @@
     }
     .toast.show{ display:block; }
 
-    /* Modals（略） */
+    /* Modals */
     .overlay{
       position: fixed;
       inset: 0;
@@ -768,10 +777,9 @@
     }
   }
 
-  // ✅ 下方牌區渲染：四張都放上去後，改成「一條送出按鈕」出現在同一區塊
+  // 下方牌區渲染：四張都放上去後，改成「一條送出按鈕」出現在同一區塊
   function renderBottom(){
     cardGrid.innerHTML = "";
-
     const allPlaced = game.slots.every(v => v !== null);
 
     if(allPlaced){
@@ -814,10 +822,13 @@
     }
   }
 
+  /* 4. 難度字體顏色改成對應難度色 */
   function renderHUD(){
     const d = DIFF[game.difficulty];
     reqTitle.textContent = game.requirement === "max" ? "排出最大的數" : "排出最小的數";
-    reqMeta.textContent = `第 ${game.roundIndex+1} 回合 / ${ROUNDS}　・　難度：${d.label}`;
+    reqMeta.innerHTML =
+      `第 ${game.roundIndex+1} 回合 / ${ROUNDS}　・　` +
+      `難度：<span style="color:${d.color}; font-weight:950;">${d.label}</span>`;
   }
 
   function renderAll(){
@@ -840,7 +851,7 @@
     renderAll();
   }
 
-  /* Records / Result（保持不變） */
+  /* Records / Result */
   function loadRecords(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -1012,6 +1023,8 @@
       topArea.appendChild(slot);
     }
   }
+
+  // init screen
   initSlots();
   setScreen("home");
 })();
