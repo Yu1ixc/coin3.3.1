@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>排排看小遊戲</titleltitle>
+  <title>排排看小遊戲</title>
   <style>
     :root{
       --bg: #f5f7fb;
@@ -17,7 +17,6 @@
       --hard:#dc2626;
       --accent:#2563eb;
 
-      /* 緊湊間距 */
       --gap: 8px;
       --tight: 2px;
       --pad: 6px;
@@ -29,9 +28,13 @@
       --topbarH: 64px;
       --pagePadX: 18px;
 
-      /* 下方牌區固定高度：保證「送出答案」永遠完整顯示 */
+      /* 下方牌區固定高度，確保按鈕永遠不被切到 */
       --bottomH: calc(var(--cardSize) + 14px);
       --submitH: 54px;
+
+      /* 灰細線 */
+      --cardLine: rgba(17,24,39,.35);
+      --dashLine: rgba(17,24,39,.18);
     }
 
     *{ box-sizing:border-box; }
@@ -48,7 +51,7 @@
     }
     button{ font:inherit; }
 
-    /* ===== Topbar：去掉白底長條（透明） + 左遊戲紀錄 右退出 ===== */
+    /* Topbar：透明（去掉白色橫條底色） */
     .topbar{
       position:fixed;
       inset: 0 0 auto 0;
@@ -93,12 +96,11 @@
       margin: 0 auto;
     }
 
-    /* ===== Home：去掉中間大白底框 ===== */
-    .panel{
+    /* Home：去掉中間大白底 */
+    #screenHome{
       height:100%;
       background: transparent;
       border: none;
-      border-radius: 0;
       box-shadow: none;
       overflow: visible;
     }
@@ -128,7 +130,7 @@
       margin-top: 8px;
     }
 
-    /* 5. 難度按鈕：白底 + 對應色框 */
+    /* 難度按鈕：白底、彩色框 */
     .pill{
       min-width: 210px;
       padding: 18px 18px;
@@ -167,13 +169,13 @@
       min-width: 220px;
       font-size: 19px;
       transition: transform .12s ease, opacity .12s ease;
-      box-shadow: 0 14px 28px rgba(37,99,235,.22);
+      box-shadow: 0 14px 28px rgba(37,99,235,.18);
     }
     .primary:disabled{ opacity: .45; cursor: not-allowed; transform: none; box-shadow:none; }
     .primary:not(:disabled):hover{ transform: translateY(-1px); }
 
-    /* ===== Game：無外框；去掉三塊白底（但保留細線框） ===== */
-    .gameRoot{ height:100%; width:100%; }
+    /* Game：無外框；三塊長方形白底都去掉 */
+    #screenGame{ height:100%; width:100%; }
     .game{
       height:100%;
       display:flex;
@@ -188,8 +190,8 @@
       border: 1px solid var(--line);
       border-radius: 18px;
       padding: var(--hudpad);
-      background: transparent;          /* 3. 去掉白底 */
-      box-shadow: none;                 /* 3. 去掉白底陰影感 */
+      background: transparent;
+      box-shadow: none;
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -201,7 +203,7 @@
 
     .timer{
       border: 1px solid var(--line);
-      background: transparent;          /* 3. 去掉白底 */
+      background: transparent;
       border-radius: 14px;
       padding: 8px 12px;
       min-width: 140px;
@@ -223,7 +225,7 @@
     .topArea, .bottomArea{
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: transparent;          /* 3. 去掉白底 */
+      background: transparent;
       padding: var(--pad);
       overflow: visible;
       box-shadow: none;
@@ -236,11 +238,11 @@
       align-items:center;
     }
 
-    /* 1. 卡牌不超出格子 */
+    /* 牌放上去不外溢 */
     .slot{
       height: var(--slotH);
       border-radius: 18px;
-      border: 2px dashed rgba(17,24,39,.18);
+      border: 1px dashed var(--dashLine);
       background: rgba(17,24,39,.03);
       display:grid;
       place-items:center;
@@ -252,14 +254,14 @@
     .slot.over{ border-color: rgba(37,99,235,.75); background: rgba(37,99,235,.08); }
     .slotLabel{ color: rgba(17,24,39,.42); font-size: 15px; font-weight: 900; letter-spacing:.3px; }
 
+    /* 遊戲內卡牌：灰色細線框 */
     .slotCard{
       width: min(var(--cardSize), 100%);
       height: min(var(--cardSize), 100%);
       max-width: 100%;
       max-height: 100%;
       border-radius: 18px;
-      /* 6. 灰色細線條框 */
-      border: 1px solid rgba(17,24,39,.35);
+      border: 1px solid var(--cardLine);
       background: rgba(255,255,255,.70);
       display:grid;
       place-items:center;
@@ -291,7 +293,6 @@
       place-items:center;
     }
 
-    /* 6. 灰色細線條框（下方牌） */
     .card, .placeholder{
       width: var(--cardSize);
       height: var(--cardSize);
@@ -299,7 +300,7 @@
       border-radius: 18px;
     }
     .card{
-      border: 1px solid rgba(17,24,39,.35);
+      border: 1px solid var(--cardLine);
       background: rgba(255,255,255,.70);
       display:grid;
       place-items:center;
@@ -316,7 +317,7 @@
       background: transparent;
     }
 
-    /* 送出答案在牌區格子裡，跨 4 欄 */
+    /* 送出答案：出現在下方牌區格子裡（跨四格） */
     .submitCell{
       grid-column: 1 / -1;
       width: 100%;
@@ -460,7 +461,7 @@
     <div class="page">
       <div class="container">
 
-        <div class="panel" id="screenHome">
+        <div id="screenHome">
           <section class="home">
             <div class="title">排排看小遊戲</div>
 
@@ -485,7 +486,7 @@
           </section>
         </div>
 
-        <div class="gameRoot" id="screenGame" style="display:none;">
+        <div id="screenGame" style="display:none;">
           <section class="game">
             <div class="hud">
               <div class="hudCard">
@@ -551,11 +552,11 @@
 (() => {
   const DIFF = {
     easy: { label: "簡單", times: [150,120,90], color: getComputedStyle(document.documentElement).getPropertyValue('--easy').trim() },
-    mid:  { label: "中等", times: [90,60,30],    color: getComputedStyle(document.documentElement).getPropertyValue('--mid').trim() },
-    hard: { label: "困難", times: [20,20,20],    color: getComputedStyle(document.documentElement).getPropertyValue('--hard').trim() },
+    mid:  { label: "中等", times: [90,60,30],   color: getComputedStyle(document.documentElement).getPropertyValue('--mid').trim() },
+    hard: { label: "困難", times: [20,20,20],   color: getComputedStyle(document.documentElement).getPropertyValue('--hard').trim() },
   };
   const ROUNDS = 3;
-  const STORAGE_KEY = "ppk_records_v7";
+  const STORAGE_KEY = "ppk_records_v8";
 
   const screenHome = document.getElementById("screenHome");
   const screenGame = document.getElementById("screenGame");
@@ -777,7 +778,7 @@
     }
   }
 
-  // 下方牌區渲染：四張都放上去後，改成「一條送出按鈕」出現在同一區塊
+  // 下方牌區：四張都放上去後，改成「送出答案」出現在同一區塊
   function renderBottom(){
     cardGrid.innerHTML = "";
     const allPlaced = game.slots.every(v => v !== null);
@@ -797,7 +798,6 @@
       return;
     }
 
-    // 牌未放滿：固定四格（被用掉就顯示 placeholder，不位移）
     for(let i=0;i<4;i++){
       const d = game.digits[i];
       const cell = document.createElement("div");
@@ -822,7 +822,7 @@
     }
   }
 
-  /* 4. 難度字體顏色改成對應難度色 */
+  // 難度標示文字上色
   function renderHUD(){
     const d = DIFF[game.difficulty];
     reqTitle.textContent = game.requirement === "max" ? "排出最大的數" : "排出最小的數";
@@ -965,7 +965,6 @@
     const record = {
       at: new Date().toISOString(),
       difficulty: game.difficulty,
-      difficultyLabel: DIFF[game.difficulty].label,
       success,
       reason,
       timesUsed: [...game.timesUsed],
@@ -988,7 +987,9 @@
   closeRecordsBtn.addEventListener("click", closeRecords);
   closeRecordsBtn2.addEventListener("click", closeRecords);
 
-  recordsOverlay.addEventListener("click", (e) => { if(e.target === recordsOverlay) closeRecords(); });
+  recordsOverlay.addEventListener("click", (e) => {
+    if(e.target === recordsOverlay) closeRecords();
+  });
 
   clearRecordsBtn.addEventListener("click", () => {
     clearRecords();
@@ -1024,7 +1025,6 @@
     }
   }
 
-  // init screen
   initSlots();
   setScreen("home");
 })();
