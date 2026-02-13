@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>排排看小遊戲</title>
+  <style>
+    :root{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel2: #fbfcff;
+      --text: #111827;
+      --muted: rgba(17,24,39,.68);
+      --line: rgba(17,24,39,.12);
+      --shadow: 0 18px 48px rgba(17,24,39,.12);
+
+      --easy:#16a34a;
+      --mid:#ca8a04;
+      --hard:#dc2626;
+      --accent:#2563eb;
+
+      /* 緊湊間距 */
+      --gap: 8px;
+      --tight: 2px;
+      --pad: 6px;
+      --hudpad: 8px 10px;
+
+      --cardSize: 165px;
+      --slotH: min(195px, 24vh);
+      --topbarH: 64px;
+      --pagePadX: 18px; /* ✅ 跟 topbar 同左右 padding，才能對齊 */
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Noto Sans TC", Segoe UI, Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(900px 650px at 10% 10%, rgba(37,99,235,.10), transparent 60%),
+        radial-gradient(900px 650px at 90% 20%, rgba(22,163,74,.08), transparent 60%),
+        radial-gradient(900px 650px at 70% 95%, rgba(220,38,38,.06), transparent 60%),
+        var(--bg);
+      color: var(--text);
+    }
+    button{ font:inherit; }
+
+    /* Top bar：✅ 左=遊戲紀錄，右=退出遊戲 */
+    .topbar{
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--topbarH);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      padding: 0 var(--pagePadX);
+      background: rgba(255,255,255,.88);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+    .topLeft, .topRight{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .ghost{
+      border: 1px solid var(--line);
+      background: rgba(17,24,39,.04);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .dangerBtn{
+      border: 1px solid rgba(220,38,38,.35);
+      background: rgba(220,38,38,.12);
+      color: #991b1b;
+    }
+
+    /* Page: ✅ 置頂且與 topbar 同左右邊界 */
+    main{
+      padding-top: var(--topbarH);
+      height: calc(100vh - var(--topbarH));
+    }
+    .page{
+      height: 100%;
+      padding: 0 var(--pagePadX); /* ✅ 內容左右跟 topbar 對齊 */
+    }
+    .container{
+      height: 100%;
+      width: 100%;
+      max-width: 1020px; /* 想要寬一點就改大 */
+      margin: 0 auto;
+    }
+
+    /* Home（維持有框框，遊戲才拿掉外框） */
+    .panel{
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      height: 100%;
+    }
+
+    .home{
+      padding: 34px 22px 30px;
+      height: 100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content: space-between;
+      text-align:center;
+      gap: 22px;
+    }
+    .title{
+      font-size: clamp(44px, 5.8vw, 68px);
+      margin: 6px 0 0;
+      letter-spacing: 1px;
+      font-weight: 950;
+    }
+    .difficultyRow{
+      width: min(920px, 100%);
+      display:flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content:center;
+      align-items:stretch;
+      margin-top: 8px;
+    }
+    .pill{
+      min-width: 210px;
+      padding: 18px 18px;
+      border-radius: 18px;
+      cursor:pointer;
+      display:grid;
+      gap: 10px;
+      text-align:left;
+      transition: transform .12s ease, filter .12s ease;
+      border: 1px solid var(--line);
+      background: rgba(17,24,39,.03);
+    }
+    .pill:hover{ transform: translateY(-2px); }
+    .pill[data-d="easy"]{ background: rgba(22,163,74,.22); border-color: rgba(22,163,74,.62); }
+    .pill[data-d="mid"] { background: rgba(202,138,4,.26); border-color: rgba(202,138,4,.64); }
+    .pill[data-d="hard"]{ background: rgba(220,38,38,.22); border-color: rgba(220,38,38,.64); }
+    .pill .name{ font-weight: 950; letter-spacing:.3px; font-size: 22px; }
+    .pill .meta{ color: rgba(17,24,39,.76); font-size: 15px; line-height:1.4; font-weight: 850; }
+    .pill.selected{ outline: 3px solid rgba(37,99,235,.26); filter: saturate(1.15); }
+
+    .startRow{ margin-top: 10px; display:flex; justify-content:center; }
+    .primary{
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      padding: 16px 22px;
+      border-radius: 16px;
+      cursor:pointer;
+      font-weight: 950;
+      letter-spacing: .6px;
+      min-width: 220px;
+      font-size: 19px;
+      transition: transform .12s ease, opacity .12s ease;
+      box-shadow: 0 14px 28px rgba(37,99,235,.22);
+    }
+    .primary:disabled{ opacity: .45; cursor: not-allowed; transform: none; box-shadow:none; }
+    .primary:not(:disabled):hover{ transform: translateY(-1px); }
+
+    /* ✅ Game：外框拿掉（不再有 panel），直接貼頂欄下方 */
+    .gameRoot{
+      height: 100%;
+      width: 100%;
+      /* 不要 border / shadow / radius，讓它像「頁面本體」 */
+    }
+    .game{
+      height: 100%;
+      padding: 0;                 /* ✅ 上方不留白 */
+      display:flex;
+      flex-direction:column;
+      gap: var(--tight);
+    }
+
+    .hud{
+      display:flex;
+      align-items:stretch;
+      justify-content:space-between;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+    .hudCard{
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;        /* ✅ HUD 自己保留圓角，但不是外框 */
+      padding: var(--hudpad);
+      background: rgba(255,255,255,.92);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      box-shadow: 0 10px 24px rgba(17,24,39,.10);
+    }
+    .req{ display:grid; gap: 2px; }
+    .reqTitle{ margin:0; font-size: 25px; font-weight: 950; letter-spacing:.4px; }
+    .reqMeta{ margin:0; color: var(--muted); font-size: 16px; font-weight: 900; }
+    .timer{
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 14px;
+      padding: 8px 12px;
+      min-width: 140px;
+      text-align:center;
+      font-weight: 950;
+      letter-spacing:.5px;
+      box-shadow: 0 8px 20px rgba(17,24,39,.08);
+    }
+    .timer span{ font-size: 26px; }
+
+    .board{
+      flex: 1 1 auto;
+      min-height: 0;
+      display:grid;
+      grid-template-rows: 64% 36%;
+      gap: var(--tight);
+    }
+    .topArea, .bottomArea{
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.92);
+      padding: var(--pad);
+      overflow:hidden;
+      box-shadow: 0 10px 24px rgba(17,24,39,.08);
+    }
+
+    .topArea{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+      align-items: center;
+    }
+    .slot{
+      height: var(--slotH);
+      border-radius: 18px;
+      border: 2px dashed rgba(17,24,39,.18);
+      background: rgba(17,24,39,.03);
+      display:grid;
+      place-items:center;
+      transition: border-color .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .slot.over{ border-color: rgba(37,99,235,.75); background: rgba(37,99,235,.08); }
+    .slotLabel{ color: rgba(17,24,39,.42); font-size: 15px; font-weight: 900; letter-spacing:.3px; }
+
+    .slotCard{
+      width: var(--cardSize);
+      height: var(--cardSize);
+      max-width: 92%;
+      max-height: 86%;
+      border-radius: 18px;
+      border: 1px solid rgba(17,24,39,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(245,247,251,1));
+      display:grid;
+      place-items:center;
+      font-size: clamp(56px, 7vw, 86px);
+      font-weight: 950;
+      cursor:pointer;
+      box-shadow: 0 16px 26px rgba(17,24,39,.16);
+    }
+
+    .bottomArea{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: var(--tight);
+    }
+    .cardGrid{
+      width: 100%;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+      align-items:center;
+      justify-items:center;
+    }
+    .cardCell{
+      width: 100%;
+      height: var(--cardSize);
+      display:grid;
+      place-items:center;
+    }
+    .card, .placeholder{
+      width: var(--cardSize);
+      height: var(--cardSize);
+      max-width: 92%;
+      border-radius: 18px;
+    }
+    .card{
+      border: 1px solid rgba(17,24,39,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(245,247,251,1));
+      display:grid;
+      place-items:center;
+      font-size: 78px;
+      font-weight: 950;
+      cursor: grab;
+      user-select:none;
+      box-shadow: 0 16px 26px rgba(17,24,39,.16);
+      transition: transform .10s ease;
+    }
+    .card:active{ cursor: grabbing; transform: scale(.985); }
+    .placeholder{
+      border: 2px dashed rgba(17,24,39,.16);
+      background: rgba(17,24,39,.02);
+    }
+
+    .submitBtn{
+      width: min(460px, 94%);
+      height: 54px;
+      border-radius: 16px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 950;
+      letter-spacing: .7px;
+      cursor:pointer;
+      font-size: 20px;
+      box-shadow: 0 14px 28px rgba(37,99,235,.22);
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--line);
+      padding: 12px 16px;
+      border-radius: 16px;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      display:none;
+      z-index: 30;
+      max-width: min(640px, 92vw);
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .toast.show{ display:block; }
+
+    /* Modals */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,.50);
+      display:none;
+      place-items:center;
+      padding: 16px;
+      z-index: 50;
+    }
+    .overlay.show{ display:grid; }
+    .modal{
+      width: min(940px, 100%);
+      height: min(78vh, 700px);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      display:grid;
+      grid-template-rows: auto 1fr auto;
+      overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+    .modalHeader{
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .modalHeader h3{
+      margin:0;
+      font-size: 20px;
+      font-weight: 950;
+      letter-spacing:.4px;
+    }
+    .modalBody{
+      padding: 18px;
+      overflow:auto;
+      font-size: 16px;
+    }
+    .modalFooter{
+      padding: 14px 18px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+    }
+    .btn{
+      border: 1px solid var(--line);
+      background: rgba(17,24,39,.04);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 16px;
+      cursor:pointer;
+      font-size: 16px;
+      font-weight: 950;
+    }
+    .btn.primary{ background: var(--accent); border-color: transparent; color:#fff; }
+    .btn.danger{ background: rgba(220,38,38,.10); border-color: rgba(220,38,38,.35); color:#991b1b; }
+
+    .recordList{ display:grid; gap: 10px; }
+    .recordItem{
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: rgba(17,24,39,.03);
+      display:grid;
+      gap: 8px;
+    }
+    .recordTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(17,24,39,.03);
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 950;
+    }
+    .badge .bDot{ width: 10px; height: 10px; border-radius: 999px; }
+    .times{
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      font-weight: 900;
+    }
+    .empty{
+      color: var(--muted);
+      text-align:center;
+      padding: 26px 0;
+      line-height: 1.7;
+      font-weight: 950;
+    }
+    .hr{ height:1px; background: var(--line); margin: 14px 0; }
+    .small{ font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 850; }
+
+    @media (max-width: 860px){
+      :root{ --cardSize: 150px; }
+      .reqTitle{ font-size: 22px; }
+      .card{ font-size: 70px; }
+    }
+    @media (max-width: 640px){
+      :root{ --cardSize: 120px; --gap: 8px; }
+      .card{ font-size: 58px; }
+      .hudCard{ padding: 8px 10px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ✅ 左上：遊戲紀錄｜右上：退出遊戲 -->
+  <div class="topbar">
+    <div class="topLeft">
+      <button class="ghost" id="openRecordsBtn">遊戲紀錄</button>
+    </div>
+    <div class="topRight">
+      <button class="ghost dangerBtn" id="exitGameBtn" style="display:none;">退出遊戲</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="page">
+      <div class="container">
+
+        <!-- Home（保留外框） -->
+        <div class="panel" id="screenHome">
+          <section class="home">
+            <div class="title">排排看小遊戲</div>
+
+            <div class="difficultyRow" role="group" aria-label="選擇難度">
+              <button class="pill" data-d="easy" id="btnEasy" type="button">
+                <div class="name">簡單</div>
+                <div class="meta">3 回合：150s → 120s → 90s</div>
+              </button>
+              <button class="pill" data-d="mid" id="btnMid" type="button">
+                <div class="name">中等</div>
+                <div class="meta">3 回合：90s → 60s → 30s</div>
+              </button>
+              <button class="pill" data-d="hard" id="btnHard" type="button">
+                <div class="name">困難</div>
+                <div class="meta">3 回合：20s → 20s → 20s</div>
+              </button>
+            </div>
+
+            <div class="startRow">
+              <button class="primary" id="startGameBtn" type="button" disabled>開始遊戲</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- ✅ Game（無外框，直接像頁面內容） -->
+        <div class="gameRoot" id="screenGame" style="display:none;">
+          <section class="game">
+            <div class="hud">
+              <div class="hudCard">
+                <div class="req">
+                  <p class="reqTitle" id="reqTitle">排出最大的數</p>
+                  <p class="reqMeta" id="reqMeta">第 1 回合 / 3　・　難度：簡單</p>
+                </div>
+                <div class="timer"><span id="timerText">--</span>秒</div>
+              </div>
+            </div>
+
+            <div class="board">
+              <div class="topArea" id="topArea"></div>
+              <div class="bottomArea">
+                <div class="cardGrid" id="cardGrid"></div>
+                <button class="submitBtn" id="submitBtn" type="button" style="display:none;">送出答案</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Records Modal -->
+  <div class="overlay" id="recordsOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="recordsTitle">
+      <div class="modalHeader">
+        <h3 id="recordsTitle">遊戲紀錄</h3>
+        <button class="btn" id="closeRecordsBtn" type="button">關閉</button>
+      </div>
+      <div class="modalBody">
+        <div class="small">顯示每次遊玩的難度與各回合用時（秒）。若答錯或超時，本輪會直接結束。</div>
+        <div class="hr"></div>
+        <div class="recordList" id="recordList"></div>
+        <div class="hr"></div>
+        <button class="btn danger" id="clearRecordsBtn" type="button">清除所有紀錄</button>
+      </div>
+      <div class="modalFooter">
+        <button class="btn" id="closeRecordsBtn2" type="button">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Modal (no close option) -->
+  <div class="overlay" id="resultOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div class="modalHeader">
+        <h3 id="resultTitle">本輪結果</h3>
+        <div></div>
+      </div>
+      <div class="modalBody" id="resultBody"></div>
+      <div class="modalFooter">
+        <button class="btn" id="backHomeBtn" type="button">回到選擇難度</button>
+        <button class="btn primary" id="playAgainBtn" type="button">重新挑戰</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const DIFF = {
+    easy: { label: "簡單", times: [150,120,90], color: getComputedStyle(document.documentElement).getPropertyValue('--easy').trim() },
+    mid:  { label: "中等", times: [90,60,30],    color: getComputedStyle(document.documentElement).getPropertyValue('--mid').trim() },
+    hard: { label: "困難", times: [20,20,20],    color: getComputedStyle(document.documentElement).getPropertyValue('--hard').trim() },
+  };
+  const ROUNDS = 3;
+  const STORAGE_KEY = "ppk_records_v6";
+
+  const screenHome = document.getElementById("screenHome");
+  const screenGame = document.getElementById("screenGame");
+
+  const btnEasy = document.getElementById("btnEasy");
+  const btnMid  = document.getElementById("btnMid");
+  const btnHard = document.getElementById("btnHard");
+  const startGameBtn = document.getElementById("startGameBtn");
+
+  const reqTitle = document.getElementById("reqTitle");
+  const reqMeta  = document.getElementById("reqMeta");
+  const timerText = document.getElementById("timerText");
+
+  const topArea = document.getElementById("topArea");
+  const cardGrid = document.getElementById("cardGrid");
+  const submitBtn = document.getElementById("submitBtn");
+
+  const toast = document.getElementById("toast");
+
+  const openRecordsBtn = document.getElementById("openRecordsBtn");
+  const exitGameBtn = document.getElementById("exitGameBtn");
+
+  const recordsOverlay = document.getElementById("recordsOverlay");
+  const closeRecordsBtn = document.getElementById("closeRecordsBtn");
+  const closeRecordsBtn2 = document.getElementById("closeRecordsBtn2");
+  const clearRecordsBtn = document.getElementById("clearRecordsBtn");
+  const recordList = document.getElementById("recordList");
+
+  const resultOverlay = document.getElementById("resultOverlay");
+  const resultBody = document.getElementById("resultBody");
+  const backHomeBtn = document.getElementById("backHomeBtn");
+  const playAgainBtn = document.getElementById("playAgainBtn");
+
+  let selectedDifficulty = null;
+
+  let game = {
+    difficulty: null,
+    roundIndex: 0,
+    roundLimit: 0,
+    requirement: null,
+    digits: [],
+    slots: [null,null,null,null],
+    used: new Set(),
+    startAt: 0,
+    tickTimer: null,
+    remain: 0,
+    timesUsed: [],
+    ended: false,
+  };
+
+  const pad2 = (n) => String(n).padStart(2, "0");
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove("show"), 1400);
+  }
+
+  function pick4DistinctDigits(){
+    const pool = Array.from({length:10}, (_,i)=>i);
+    for(let i=pool.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0,4);
+  }
+
+  function computeTarget(digits, requirement){
+    const sorted = [...digits].sort((a,b)=>a-b);
+    return Number(requirement === "max" ? sorted.slice().reverse().join("") : sorted.join(""));
+  }
+
+  function currentAnswerFromSlots(){
+    if(game.slots.some(v => v === null)) return null;
+    return Number(game.slots.join(""));
+  }
+
+  function setScreen(name){
+    if(name === "home"){
+      screenHome.style.display = "";
+      screenGame.style.display = "none";
+      exitGameBtn.style.display = "none";
+    }else{
+      screenHome.style.display = "none";
+      screenGame.style.display = "";
+      exitGameBtn.style.display = "";
+    }
+  }
+
+  function setDifficulty(d){
+    selectedDifficulty = d;
+    [btnEasy, btnMid, btnHard].forEach(b => b.classList.remove("selected"));
+    ({ easy: btnEasy, mid: btnMid, hard: btnHard })[d].classList.add("selected");
+    startGameBtn.disabled = false;
+  }
+
+  function stopTimer(){
+    if(game.tickTimer){
+      clearInterval(game.tickTimer);
+      game.tickTimer = null;
+    }
+  }
+
+  function exitToHome(){
+    stopTimer();
+    game.ended = true;
+    recordsOverlay.classList.remove("show");
+    resultOverlay.classList.remove("show");
+    setScreen("home");
+  }
+
+  function startGame(difficulty){
+    game.difficulty = difficulty;
+    game.roundIndex = 0;
+    game.timesUsed = [];
+    game.ended = false;
+    setScreen("game");
+    startRound(0);
+  }
+
+  function startTimer(limitSeconds){
+    stopTimer();
+    game.roundLimit = limitSeconds;
+    game.startAt = Date.now();
+    game.remain = limitSeconds;
+    timerText.textContent = game.remain;
+
+    game.tickTimer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - game.startAt) / 1000);
+      const remain = limitSeconds - elapsed;
+      game.remain = remain;
+      timerText.textContent = Math.max(0, remain);
+
+      if(remain <= 0){
+        stopTimer();
+        endGame(false, "超時");
+      }
+    }, 200);
+  }
+
+  function placeDigitIntoSlot(digit, slotIndex){
+    if(game.used.has(digit)) return;
+
+    const prev = game.slots[slotIndex];
+    if(prev !== null){
+      game.used.delete(prev);
+      game.slots[slotIndex] = null;
+    }
+    game.used.add(digit);
+    game.slots[slotIndex] = digit;
+  }
+
+  function renderSlots(){
+    topArea.innerHTML = "";
+    for(let i=0;i<4;i++){
+      const slot = document.createElement("div");
+      slot.className = "slot";
+
+      const value = game.slots[i];
+
+      if(value === null){
+        const label = document.createElement("div");
+        label.className = "slotLabel";
+        label.textContent = "拖曳放入";
+        slot.appendChild(label);
+      }else{
+        const card = document.createElement("div");
+        card.className = "slotCard";
+        card.textContent = String(value);
+        card.title = "點一下把卡牌收回";
+        card.addEventListener("click", () => {
+          game.used.delete(value);
+          game.slots[i] = null;
+          renderAll();
+        });
+        slot.appendChild(card);
+      }
+
+      slot.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        slot.classList.add("over");
+      });
+      slot.addEventListener("dragleave", () => slot.classList.remove("over"));
+      slot.addEventListener("drop", (e) => {
+        e.preventDefault();
+        slot.classList.remove("over");
+        const digit = Number(e.dataTransfer.getData("text/plain"));
+        if(Number.isNaN(digit)) return;
+        if(game.used.has(digit)) return;
+
+        placeDigitIntoSlot(digit, i);
+        renderAll();
+      });
+
+      topArea.appendChild(slot);
+    }
+  }
+
+  function renderBottom(){
+    cardGrid.innerHTML = "";
+    for(let i=0;i<4;i++){
+      const d = game.digits[i];
+      const cell = document.createElement("div");
+      cell.className = "cardCell";
+
+      if(game.used.has(d)){
+        const ph = document.createElement("div");
+        ph.className = "placeholder";
+        cell.appendChild(ph);
+      }else{
+        const card = document.createElement("div");
+        card.className = "card";
+        card.textContent = String(d);
+        card.draggable = true;
+        card.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", String(d));
+          e.dataTransfer.effectAllowed = "move";
+        });
+        cell.appendChild(card);
+      }
+      cardGrid.appendChild(cell);
+    }
+
+    const allPlaced = game.slots.every(v => v !== null);
+    submitBtn.style.display = allPlaced ? "" : "none";
+  }
+
+  function renderHUD(){
+    const d = DIFF[game.difficulty];
+    reqTitle.textContent = game.requirement === "max" ? "排出最大的數" : "排出最小的數";
+    reqMeta.textContent = `第 ${game.roundIndex+1} 回合 / ${ROUNDS}　・　難度：${d.label}`;
+  }
+
+  function renderAll(){
+    renderHUD();
+    renderSlots();
+    renderBottom();
+  }
+
+  function startRound(roundIndex){
+    game.roundIndex = roundIndex;
+    game.slots = [null,null,null,null];
+    game.used = new Set();
+
+    game.digits = pick4DistinctDigits();
+    game.requirement = Math.random() < 0.5 ? "max" : "min";
+
+    const limit = DIFF[game.difficulty].times[roundIndex];
+    startTimer(limit);
+
+    renderAll();
+  }
+
+  function submitAnswer(){
+    const ans = currentAnswerFromSlots();
+    if(ans === null){
+      showToast("還沒放滿 4 張卡牌");
+      return;
+    }
+
+    const target = computeTarget(game.digits, game.requirement);
+    const usedSeconds = game.roundLimit - Math.max(0, game.remain);
+
+    if(ans === target){
+      game.timesUsed.push(usedSeconds);
+      stopTimer();
+
+      if(game.roundIndex + 1 < ROUNDS){
+        showToast("答對，進入下一回合");
+        setTimeout(() => startRound(game.roundIndex + 1), 420);
+      }else{
+        endGame(true, "全部答對");
+      }
+    }else{
+      endGame(false, "答錯");
+    }
+  }
+
+  function loadRecords(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }catch{
+      return [];
+    }
+  }
+  function saveRecord(rec){
+    const list = loadRecords();
+    list.unshift(rec);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 50)));
+  }
+  function clearRecords(){
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  function badgeHTML(diffKey){
+    const d = DIFF[diffKey];
+    const dot = `<span class="bDot" style="background:${d.color}"></span>`;
+    return `<span class="badge">${dot}${d.label}</span>`;
+  }
+
+  function renderRecords(){
+    const list = loadRecords();
+    recordList.innerHTML = "";
+
+    if(list.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "目前還沒有遊戲紀錄。";
+      recordList.appendChild(empty);
+      return;
+    }
+
+    list.forEach((r) => {
+      const item = document.createElement("div");
+      item.className = "recordItem";
+
+      const at = new Date(r.at);
+      const when = `${at.getFullYear()}-${pad2(at.getMonth()+1)}-${pad2(at.getDate())} ${pad2(at.getHours())}:${pad2(at.getMinutes())}`;
+
+      const top = document.createElement("div");
+      top.className = "recordTop";
+      top.innerHTML = `
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          ${badgeHTML(r.difficulty)}
+          <span class="badge" style="color:${r.success ? 'rgba(22,163,74,.95)' : 'rgba(220,38,38,.95)'}">
+            ${r.success ? "成功" : "失敗"}（${r.reason}）
+          </span>
+          <span class="badge">${when}</span>
+        </div>
+      `;
+      item.appendChild(top);
+
+      const times = document.createElement("div");
+      times.className = "times";
+      const lines = [];
+      for(let i=0;i<ROUNDS;i++){
+        const t = r.timesUsed[i];
+        if(typeof t === "number") lines.push(`第 ${i+1} 回合：${t} 秒`);
+        else lines.push(`第 ${i+1} 回合：—`);
+      }
+      times.textContent = lines.join("\n");
+      item.appendChild(times);
+
+      recordList.appendChild(item);
+    });
+  }
+
+  function openRecords(){
+    renderRecords();
+    recordsOverlay.classList.add("show");
+    recordsOverlay.setAttribute("aria-hidden","false");
+  }
+  function closeRecords(){
+    recordsOverlay.classList.remove("show");
+    recordsOverlay.setAttribute("aria-hidden","true");
+  }
+
+  function showResult(record){
+    const completed = record.timesUsed.length;
+    const lines = [];
+    for(let i=0;i<ROUNDS;i++){
+      const t = record.timesUsed[i];
+      if(typeof t === "number") lines.push(`<li>第 ${i+1} 回合：<b>${t}</b> 秒</li>`);
+      else lines.push(`<li>第 ${i+1} 回合：—</li>`);
+    }
+
+    resultBody.innerHTML = `
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        ${badgeHTML(record.difficulty)}
+        <span class="badge" style="color:${record.success ? 'rgba(22,163,74,.95)' : 'rgba(220,38,38,.95)'}">
+          ${record.success ? "成功" : "失敗"}（${record.reason}）
+        </span>
+      </div>
+      <div class="hr"></div>
+      <div class="small">已完成回合：${completed} / ${ROUNDS}</div>
+      <ul style="margin:10px 0 0 18px; color: rgba(17,24,39,.92); line-height:1.7; font-weight: 950;">
+        ${lines.join("")}
+      </ul>
+    `;
+
+    resultOverlay.classList.add("show");
+    resultOverlay.setAttribute("aria-hidden","false");
+  }
+
+  function endGame(success, reason){
+    if(game.ended) return;
+    game.ended = true;
+    stopTimer();
+
+    const record = {
+      at: new Date().toISOString(),
+      difficulty: game.difficulty,
+      difficultyLabel: DIFF[game.difficulty].label,
+      success,
+      reason,
+      timesUsed: [...game.timesUsed],
+    };
+    saveRecord(record);
+    showResult(record);
+  }
+
+  // Events
+  btnEasy.addEventListener("click", () => setDifficulty("easy"));
+  btnMid.addEventListener("click",  () => setDifficulty("mid"));
+  btnHard.addEventListener("click", () => setDifficulty("hard"));
+
+  startGameBtn.addEventListener("click", () => {
+    if(!selectedDifficulty) return;
+    startGame(selectedDifficulty);
+  });
+
+  submitBtn.addEventListener("click", submitAnswer);
+
+  openRecordsBtn.addEventListener("click", openRecords);
+  closeRecordsBtn.addEventListener("click", closeRecords);
+  closeRecordsBtn2.addEventListener("click", closeRecords);
+
+  recordsOverlay.addEventListener("click", (e) => {
+    if(e.target === recordsOverlay) closeRecords();
+  });
+
+  clearRecordsBtn.addEventListener("click", () => {
+    clearRecords();
+    renderRecords();
+    showToast("已清除所有紀錄");
+  });
+
+  exitGameBtn.addEventListener("click", exitToHome);
+
+  backHomeBtn.addEventListener("click", () => {
+    resultOverlay.classList.remove("show");
+    resultOverlay.setAttribute("aria-hidden","true");
+    setScreen("home");
+  });
+
+  playAgainBtn.addEventListener("click", () => {
+    resultOverlay.classList.remove("show");
+    resultOverlay.setAttribute("aria-hidden","true");
+    startGame(game.difficulty || selectedDifficulty || "easy");
+  });
+
+  // init placeholder slots
+  function initSlots(){
+    topArea.innerHTML = "";
+    for(let i=0;i<4;i++){
+      const slot = document.createElement("div");
+      slot.className = "slot";
+      const label = document.createElement("div");
+      label.className = "slotLabel";
+      label.textContent = "開始後可拖曳放入";
+      slot.appendChild(label);
+      topArea.appendChild(slot);
+    }
+  }
+  initSlots();
+  setScreen("home");
+})();
+</script>
+</body>
+</html>
