@@ -6,1027 +6,1767 @@
   <title>排排看小遊戲</title>
   <style>
     :root{
-      --bg: #f5f7fb;
-      --text: #111827;
-      --muted: rgba(17,24,39,.68);
-      --line: rgba(17,24,39,.12);
-      --shadow: 0 18px 48px rgba(17,24,39,.12);
+      --bg:#f3f4fa;
+      --text:#111827;
+      --muted:#6b7280;
+      --easy:#22c55e;
+      --mid:#eab308;
+      --hard:#f97316;
+      --line:rgba(15,23,42,.12);
+      --shadow:0 18px 45px rgba(15,23,42,.08);
+      --radius:18px;
 
-      --easy:#16a34a;
-      --mid:#ca8a04;
-      --hard:#dc2626;
-      --accent:#2563eb;
+      --ui-scale:1;
+      --pad-body:14px;
 
-      --gap: 8px;
-      --tight: 2px;
-      --pad: 6px;
-      --hudpad: 8px 10px;
+      --gamewrap-h:640px;
+      --gamewrap-vh:70vh;
 
-      --cardSize: 165px;
-      --slotH: min(195px, 24vh);
+      --gameMain-pad:12px;
+      --gameMain-gap:12px;
 
-      --topbarH: 64px;
-      --pagePadX: 18px;
+      --panel-pad:12px;
+      --panel-gap:10px;
 
-      /* 下方牌區固定高度，確保按鈕永遠不被切到 */
-      --bottomH: calc(var(--cardSize) + 14px);
-      --submitH: 54px;
+      --slots-gap:12px;
+      --slot-h:104px;
+      --slot-pad:6px;
 
-      /* 灰細線 */
-      --cardLine: rgba(17,24,39,.35);
-      --dashLine: rgba(17,24,39,.18);
+      --submit-h:64px;
+      --result-bottom-gap:22px;
+
+      --home-title-top:46px;
+      --home-title-bottom:42px;
+      --home-diff-bottom:46px;
+      --home-bottom-pad:12px;
+
+      --help-modal-w:1380px;
+      --help-body-maxh:86vh;
+      --help-pane-minh:560px;
     }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    *{box-sizing:border-box}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, "Noto Sans TC", Segoe UI, Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
-      background:
-        radial-gradient(900px 650px at 10% 10%, rgba(37,99,235,.10), transparent 60%),
-        radial-gradient(900px 650px at 90% 20%, rgba(22,163,74,.08), transparent 60%),
-        radial-gradient(900px 650px at 70% 95%, rgba(220,38,38,.06), transparent 60%),
-        var(--bg);
-      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: radial-gradient(900px 700px at 20% 10%, #ffffff 0%, var(--bg) 55%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:calc(var(--pad-body) * var(--ui-scale));
+      overflow:hidden;
     }
-    button{ font:inherit; }
-
-    /* Topbar：透明（去掉白色橫條底色） */
-    .topbar{
-      position:fixed;
-      inset: 0 0 auto 0;
-      height: var(--topbarH);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 0 var(--pagePadX);
-      background: transparent;
-      border-bottom: none;
-      backdrop-filter: none;
-      z-index: 20;
-    }
-    .topLeft,.topRight{ display:flex; gap:10px; align-items:center; }
-    .ghost{
-      border: 1px solid var(--line);
-      background: rgba(17,24,39,.04);
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-size: 16px;
-      font-weight: 900;
-    }
-    .dangerBtn{
-      border: 1px solid rgba(220,38,38,.35);
-      background: rgba(220,38,38,.12);
-      color: #991b1b;
+    .app{
+      width:min(980px,100%);
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff, #f9fafb);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
-    main{
-      padding-top: var(--topbarH);
-      height: calc(100vh - var(--topbarH));
-    }
-    .page{
-      height:100%;
-      padding: 0 var(--pagePadX);
-    }
-    .container{
-      height:100%;
-      max-width: 1020px;
-      margin: 0 auto;
-    }
+    .screen{display:none; padding:18px 16px 18px;}
+    .screen.active{display:block;}
 
-    /* Home：去掉中間大白底 */
-    #screenHome{
-      height:100%;
-      background: transparent;
-      border: none;
-      box-shadow: none;
-      overflow: visible;
-    }
-    .home{
-      padding: 34px 22px 30px;
-      height:100%;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:space-between;
-      text-align:center;
-      gap: 22px;
-    }
+    /* HOME */
     .title{
-      font-size: clamp(44px, 5.8vw, 68px);
-      margin: 6px 0 0;
-      letter-spacing: 1px;
-      font-weight: 950;
+      font-size:58px; font-weight:950; letter-spacing:1px;
+      text-align:center;
+      margin:calc(var(--home-title-top) * var(--ui-scale)) 0 calc(var(--home-title-bottom) * var(--ui-scale));
+      color:#0f172a;
     }
     .difficultyRow{
-      width: min(920px, 100%);
-      display:flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content:center;
-      align-items:stretch;
-      margin-top: 8px;
+      display:flex; justify-content:center; gap:14px; flex-wrap:wrap;
+      margin:0 0 calc(var(--home-diff-bottom) * var(--ui-scale));
     }
+    .diffBtn{
+      min-width:190px;
+      padding:15px 16px;
+      border-radius:16px;
+      background:#ffffff;
+      color:#0f172a;
+      border:3px solid transparent;
+      cursor:pointer;
+      font-weight:950;
+      transition:.15s;
+      font-size:18px;
+      letter-spacing:.6px;
+      box-shadow:0 6px 16px rgba(148,163,184,.18);
+    }
+    .diffBtn[data-diff="easy"]{border-color:var(--easy);}
+    .diffBtn[data-diff="mid"]{border-color:var(--mid);}
+    .diffBtn[data-diff="hard"]{border-color:var(--hard);}
+    .diffBtn:hover{transform:translateY(-1px); box-shadow:0 10px 22px rgba(148,163,184,.24);}
+    .diffBtn.selected{
+      box-shadow:0 0 0 4px rgba(37,99,235,.16);
+      transform:translateY(-1px);
+    }
+    .homeActions{
+      display:flex; flex-direction:column; align-items:center;
+      gap:10px;
+      margin-bottom:calc(var(--home-bottom-pad) * var(--ui-scale));
+    }
+    .primaryBtn{
+      width:min(520px,94%);
+      padding:16px 18px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#111827;
+      color:#f9fafb;
+      font-weight:950;
+      letter-spacing:.8px;
+      cursor:pointer;
+      transition:.15s;
+      font-size:18px;
+      box-shadow:0 10px 25px rgba(15,23,42,.22);
+    }
+    .primaryBtn:disabled{
+      opacity:.40;
+      cursor:not-allowed;
+      box-shadow:none;
+      background:#9ca3af;
+    }
+    .primaryBtn:not(:disabled):hover{
+      transform:translateY(-1px);
+      background:#020617;
+    }
+    .secondaryBtn{
+      width:min(520px,94%);
+      padding:14px 18px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#ffffff;
+      color:var(--text);
+      cursor:pointer;
+      font-size:16px;
+      font-weight:850;
+      box-shadow:0 4px 10px rgba(148,163,184,.18);
+    }
+    .secondaryBtn:hover{background:#f3f4ff;}
 
-    /* 難度按鈕：白底、彩色框 */
+    /* GAME TOP */
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background:#f3f4ff;
+    }
+    .reqBox{
+      flex:1;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#ffffff;
+      min-height:56px;
+      box-shadow:0 4px 10px rgba(148,163,184,.18);
+    }
+    .reqLeft{display:flex; flex-direction:column; gap:6px; min-width:0;}
+    .reqText{
+      font-size:22px; letter-spacing:.4px; font-weight:950;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      color:#0f172a;
+    }
+    .reqMeta{
+      font-size:14px; color:var(--muted);
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
     .pill{
-      min-width: 210px;
-      padding: 18px 18px;
-      border-radius: 18px;
-      cursor:pointer;
-      display:grid;
-      gap: 10px;
-      text-align:left;
-      transition: transform .12s ease, filter .12s ease;
-      background: rgba(255,255,255,.86);
-      border: 2px solid var(--line);
-      box-shadow: none;
+      border:1px solid var(--line);
+      background:#eef2ff;
+      padding:4px 10px;
+      border-radius:999px;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+      font-weight:900;
     }
-    .pill:hover{ transform: translateY(-2px); }
-    .pill[data-d="easy"]{ border-color: var(--easy); }
-    .pill[data-d="mid"] { border-color: var(--mid); }
-    .pill[data-d="hard"]{ border-color: var(--hard); }
-
-    .pill .name{ font-weight: 950; letter-spacing:.3px; font-size: 22px; }
-    .pill .meta{ color: rgba(17,24,39,.76); font-size: 15px; line-height:1.4; font-weight: 850; }
-    .pill.selected{
-      outline: 3px solid rgba(37,99,235,.22);
-      filter: saturate(1.08);
-    }
-
-    .startRow{ margin-top: 10px; display:flex; justify-content:center; }
-    .primary{
-      border: none;
-      background: var(--accent);
-      color: #fff;
-      padding: 16px 22px;
-      border-radius: 16px;
-      cursor:pointer;
-      font-weight: 950;
-      letter-spacing: .6px;
-      min-width: 220px;
-      font-size: 19px;
-      transition: transform .12s ease, opacity .12s ease;
-      box-shadow: 0 14px 28px rgba(37,99,235,.18);
-    }
-    .primary:disabled{ opacity: .45; cursor: not-allowed; transform: none; box-shadow:none; }
-    .primary:not(:disabled):hover{ transform: translateY(-1px); }
-
-    /* Game：無外框；三塊長方形白底都去掉 */
-    #screenGame{ height:100%; width:100%; }
-    .game{
-      height:100%;
-      display:flex;
-      flex-direction:column;
-      gap: var(--tight);
-      padding: 0;
-    }
-
-    .hud{ display:flex; }
-    .hudCard{
-      width:100%;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: var(--hudpad);
-      background: transparent;
-      box-shadow: none;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-    }
-    .req{ display:grid; gap:2px; }
-    .reqTitle{ margin:0; font-size: 25px; font-weight: 950; letter-spacing:.4px; }
-    .reqMeta{ margin:0; color: var(--muted); font-size: 16px; font-weight: 900; }
-
     .timer{
-      border: 1px solid var(--line);
-      background: transparent;
-      border-radius: 14px;
-      padding: 8px 12px;
-      min-width: 140px;
+      font-variant-numeric:tabular-nums;
+      font-weight:950;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#111827;
+      color:#f9fafb;
+      min-width:108px;
       text-align:center;
-      font-weight: 950;
-      letter-spacing:.5px;
-      box-shadow: none;
+      font-size:16px;
+      box-shadow:0 6px 18px rgba(15,23,42,.28);
     }
-    .timer span{ font-size: 26px; }
-
-    .board{
-      flex: 1 1 auto;
-      min-height: 0;
-      display:grid;
-      grid-template-rows: 1fr var(--bottomH);
-      gap: var(--tight);
-    }
-
-    .topArea, .bottomArea{
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: transparent;
-      padding: var(--pad);
-      overflow: visible;
-      box-shadow: none;
-    }
-
-    .topArea{
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--gap);
-      align-items:center;
-    }
-
-    /* 牌放上去不外溢 */
-    .slot{
-      height: var(--slotH);
-      border-radius: 18px;
-      border: 1px dashed var(--dashLine);
-      background: rgba(17,24,39,.03);
-      display:grid;
-      place-items:center;
-      transition: border-color .12s ease, background .12s ease;
-      user-select:none;
-      padding: 6px;
-      overflow: hidden;
-    }
-    .slot.over{ border-color: rgba(37,99,235,.75); background: rgba(37,99,235,.08); }
-    .slotLabel{ color: rgba(17,24,39,.42); font-size: 15px; font-weight: 900; letter-spacing:.3px; }
-
-    /* 遊戲內卡牌：灰色細線框 */
-    .slotCard{
-      width: min(var(--cardSize), 100%);
-      height: min(var(--cardSize), 100%);
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: 18px;
-      border: 1px solid var(--cardLine);
-      background: rgba(255,255,255,.70);
-      display:grid;
-      place-items:center;
-      font-size: clamp(56px, 7vw, 86px);
-      font-weight: 950;
+    .topActions{display:flex; gap:10px; align-items:center;}
+    .iconBtn{
+      border:1px solid var(--line);
+      background:#ffffff;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
       cursor:pointer;
-      box-shadow: none;
+      transition:.15s;
+      white-space:nowrap;
+      font-weight:900;
+      font-size:15px;
+      box-shadow:0 4px 12px rgba(148,163,184,.18);
+    }
+    .iconBtn:hover{
+      transform:translateY(-1px);
+      background:#e5edff;
     }
 
-    .bottomArea{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: var(--pad);
+    /* GAME LAYOUT */
+    .gameWrap{
+      display:flex; flex-direction:column;
+      height:min(calc(var(--gamewrap-h) * var(--ui-scale)), calc(var(--gamewrap-vh) * var(--ui-scale)));
     }
-    .cardGrid{
-      width: 100%;
-      height: 100%;
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--gap);
-      align-items:center;
-      justify-items:center;
+    .gameMain{
+      flex:1;
+      display:flex; flex-direction:column;
+      gap:calc(var(--gameMain-gap) * var(--ui-scale));
+      padding:calc(var(--gameMain-pad) * var(--ui-scale));
+      min-height:0;
     }
-    .cardCell{
-      width: 100%;
-      height: var(--cardSize);
-      display:grid;
-      place-items:center;
+    .upper,.lower{
+      flex:1 1 50%;
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      padding:calc(var(--panel-pad) * var(--ui-scale));
+      display:flex; flex-direction:column;
+      gap:calc(var(--panel-gap) * var(--ui-scale));
+      min-height:0;
     }
+    .upper{background:#f9fafb;}
+    .lower{background:#f3f4ff;}
 
-    .card, .placeholder{
-      width: var(--cardSize);
-      height: var(--cardSize);
-      max-width: 92%;
-      border-radius: 18px;
+    .panelHeader{display:grid; grid-template-columns:1fr auto 1fr; align-items:center;}
+    .panelTitle{
+      text-align:center;
+      font-weight:950;
+      color:var(--muted);
+      letter-spacing:.7px;
+      font-size:16px;
+    }
+    .slots{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:calc(var(--slots-gap) * var(--ui-scale));
+      width:min(640px,100%);
+      margin:0 auto;
+      flex:0 0 auto;
+    }
+    .slot{
+      height:calc(var(--slot-h) * var(--ui-scale));
+      padding:calc(var(--slot-pad) * var(--ui-scale));
+      border-radius:18px;
+      border:2px dashed rgba(148,163,184,.55);
+      background:#e5edff;
+      display:flex; align-items:center; justify-content:center;
+      transition:.12s;
+    }
+    .slot.over{
+      outline:3px solid rgba(59,130,246,.55);
+      outline-offset:2px;
+      background:#dbeafe;
+    }
+    .slot.selectedTarget{
+      outline:3px solid rgba(59,130,246,.65);
+      outline-offset:2px;
+      background:#dbeafe;
     }
     .card{
-      border: 1px solid var(--cardLine);
-      background: rgba(255,255,255,.70);
-      display:grid;
-      place-items:center;
-      font-size: 78px;
-      font-weight: 950;
-      cursor: grab;
+      width:100%; height:100%;
+      border-radius:18px;
+      border:1px solid rgba(148,163,184,.80);
+      background:linear-gradient(180deg,#ffffff,#e5edff);
+      display:flex; align-items:center; justify-content:center;
+      font-size:calc(52px * var(--ui-scale));
+      font-weight:980;
+      letter-spacing:1px;
+      cursor:grab;
       user-select:none;
-      box-shadow: none;
-      transition: transform .10s ease;
+      box-shadow:0 14px 28px rgba(15,23,42,.20);
+      transition:.12s;
+      color:#0f172a;
     }
-    .card:active{ cursor: grabbing; transform: scale(.985); }
-    .placeholder{
-      border: 1px dashed rgba(17,24,39,.25);
-      background: transparent;
+    .card.selected{
+      outline:4px solid rgba(59,130,246,.65);
+      outline-offset:2px;
+      transform:translateY(-1px);
+      background:linear-gradient(180deg,#ffffff,#dbeafe);
     }
 
-    /* 送出答案：出現在下方牌區格子裡（跨四格） */
-    .submitCell{
-      grid-column: 1 / -1;
-      width: 100%;
-      height: var(--cardSize);
-      display:grid;
-      place-items:center;
+    .submitArea{
+      height:calc(var(--submit-h) * var(--ui-scale));
+      display:flex; justify-content:center; align-items:center;
+      flex:0 0 calc(var(--submit-h) * var(--ui-scale));
     }
     .submitBtn{
-      width: min(520px, 100%);
-      height: var(--submitH);
-      border-radius: 16px;
-      border: none;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 950;
-      letter-spacing: .7px;
+      width:min(640px,100%);
+      padding:14px 16px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#111827;
+      color:#f9fafb;
+      font-weight:950;
+      letter-spacing:.8px;
       cursor:pointer;
-      font-size: 20px;
-      box-shadow: 0 14px 28px rgba(37,99,235,.18);
+      transition:.15s;
+      font-size:18px;
+      box-shadow:0 10px 24px rgba(15,23,42,.30);
+    }
+    .submitBtn:hover{
+      transform:translateY(-1px);
+      background:#020617;
     }
 
     .toast{
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,.92);
-      border: 1px solid var(--line);
-      padding: 12px 16px;
-      border-radius: 16px;
-      color: var(--text);
-      box-shadow: var(--shadow);
+      position:fixed;
+      left:50%;
+      bottom:16px;
+      transform:translateX(-50%);
+      background:#111827;
+      border:1px solid rgba(15,23,42,.4);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow:0 16px 40px rgba(15,23,42,.45);
+      color:#f9fafb;
       display:none;
-      z-index: 30;
-      max-width: min(640px, 92vw);
-      font-size: 16px;
-      font-weight: 900;
+      max-width:min(720px,92vw);
+      font-size:14px;
+      z-index:50;
     }
-    .toast.show{ display:block; }
+    .toast.show{display:block;}
 
-    /* Modals */
-    .overlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(17,24,39,.50);
+    /* MODAL */
+    .modalBackdrop{
+      position:fixed; inset:0;
+      background:rgba(15,23,42,.25);
       display:none;
-      place-items:center;
-      padding: 16px;
-      z-index: 50;
+      align-items:center; justify-content:center;
+      padding:10px;
+      z-index:40;
     }
-    .overlay.show{ display:grid; }
+    .modalBackdrop.show{display:flex;}
     .modal{
-      width: min(940px, 100%);
-      height: min(78vh, 700px);
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      display:grid;
-      grid-template-rows: auto 1fr auto;
+      width:min(var(--help-modal-w),98vw);
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      background:#ffffff;
+      box-shadow:0 24px 60px rgba(15,23,42,.20);
       overflow:hidden;
-      box-shadow: var(--shadow);
     }
     .modalHeader{
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
+      padding:14px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center;
+      gap:10px;
+      background:#f3f4ff;
     }
-    .modalHeader h3{ margin:0; font-size: 20px; font-weight: 950; letter-spacing:.4px; }
-    .modalBody{ padding: 18px; overflow:auto; font-size: 16px; }
-    .modalFooter{
-      padding: 14px 18px;
-      border-top: 1px solid var(--line);
-      display:flex;
+    .modalHeader h3{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.4px;
+      font-weight:950;
+      color:#0f172a;
+    }
+    .modalClose{display:none;}
+    .modalBody{
+      padding:12px 12px 10px;
+      color:var(--text);
+      line-height:1.7;
+      font-size:18px;
+      max-height:var(--help-body-maxh);
+      overflow:auto;
+      background:#ffffff;
+    }
+    .modalActions{
+      padding:12px 14px 14px;
+      display:flex; gap:10px;
       justify-content:flex-end;
-      gap: 10px;
+      border-top:1px solid var(--line);
+      background:#f9fafb;
+      flex-wrap:wrap;
+      align-items:center;
     }
-    .btn{
-      border: 1px solid var(--line);
-      background: rgba(17,24,39,.04);
-      color: var(--text);
-      padding: 12px 16px;
-      border-radius: 16px;
+    .miniBtn{
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#ffffff;
+      color:var(--text);
       cursor:pointer;
-      font-size: 16px;
-      font-weight: 950;
+      font-size:16px;
+      font-weight:900;
+      box-shadow:0 4px 12px rgba(148,163,184,.18);
     }
-    .btn.primary{ background: var(--accent); border-color: transparent; color:#fff; }
-    .btn.danger{ background: rgba(220,38,38,.10); border-color: rgba(220,38,38,.35); color:#991b1b; }
+    .miniBtn.primary{
+      background:#111827;
+      color:#f9fafb;
+      font-weight:950;
+      letter-spacing:.4px;
+      box-shadow:0 8px 20px rgba(15,23,42,.35);
+    }
+    .miniBtn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
 
-    .recordList{ display:grid; gap: 10px; }
-    .recordItem{
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 14px 16px;
-      background: rgba(17,24,39,.03);
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid var(--line);
+      font-size:14px;
+      background:#ffffff;
+    }
+    th,td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(148,163,184,.18);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:#f3f4ff;
+      color:var(--muted);
+      font-weight:950;
+    }
+    tr:last-child td{border-bottom:none;}
+    .tag{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.60);
+      background:#eef2ff;
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.3px;
+      white-space:nowrap;
+      color:#111827;
+    }
+    .tag.easy{border-color:rgba(34,197,94,.75); background:#dcfce7;}
+    .tag.mid{border-color:rgba(234,179,8,.75); background:#fef9c3;}
+    .tag.hard{border-color:rgba(249,115,22,.75); background:#ffedd5;}
+
+    .resultBlock{margin-top:12px; padding-top:10px; border-top:1px solid rgba(148,163,184,.25);}
+    .resultLabel{
+      font-size:15px;
+      color:var(--muted);
+      font-weight:950;
+      margin-bottom:8px;
+      letter-spacing:.4px;
+    }
+    .cardRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .miniCard{
+      width:64px; height:76px;
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,.80);
+      background:linear-gradient(180deg,#ffffff,#e5edff);
+      display:flex; align-items:center; justify-content:center;
+      font-size:34px; font-weight:950;
+      box-shadow:0 10px 22px rgba(15,23,42,.20);
+      color:#0f172a;
+    }
+
+    /* countdown overlay */
+    .countdownOverlay{
+      position:fixed; inset:0;
+      display:none; align-items:center; justify-content:center;
+      background:rgba(15,23,42,.25);
+      z-index:60;
+    }
+    .countdownOverlay.show{display:flex;}
+    .countdownBox{
+      width:min(520px,92vw);
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      background:#ffffff;
+      box-shadow:0 24px 60px rgba(15,23,42,.25);
+      padding:24px 18px;
+      text-align:center;
+    }
+    .countdownTitle{
+      font-size:18px;
+      color:var(--muted);
+      font-weight:950;
+      letter-spacing:.6px;
+    }
+    .countdownNum{
+      font-size:72px;
+      font-weight:980;
+      letter-spacing:2px;
+      margin-top:10px;
+      font-variant-numeric:tabular-nums;
+      color:#0f172a;
+    }
+
+    /* HELP layout */
+    .helpGrid{
       display:grid;
-      gap: 8px;
+      grid-template-columns:.92fr 1.08fr;
+      gap:14px;
+      align-items:stretch;
     }
-    .recordTop{ display:flex; align-items:center; justify-content:space-between; gap: 10px; flex-wrap: wrap; }
-    .badge{
-      display:inline-flex; align-items:center; gap: 8px;
-      padding: 8px 12px; border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(17,24,39,.03);
-      font-size: 14px; color: var(--muted);
-      font-weight: 950;
+    @media (max-width:980px){
+      .helpGrid{grid-template-columns:1fr;}
     }
-    .badge .bDot{ width: 10px; height: 10px; border-radius: 999px; }
-    .times{ color: var(--muted); font-size: 14px; line-height: 1.6; white-space: pre-wrap; font-weight: 900; }
-    .empty{ color: var(--muted); text-align:center; padding: 26px 0; line-height: 1.7; font-weight: 950; }
-    .hr{ height:1px; background: var(--line); margin: 14px 0; }
-    .small{ font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 850; }
-
-    @media (max-width: 860px){
-      :root{ --cardSize: 150px; --bottomH: calc(var(--cardSize) + 14px); }
-      .reqTitle{ font-size: 22px; }
-      .card{ font-size: 70px; }
+    .helpPane{
+      border:1px solid var(--line);
+      background:#f9fafb;
+      border-radius:14px;
+      padding:14px;
+      min-height:var(--help-pane-minh);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      overflow:hidden;
     }
-    @media (max-width: 640px){
-      :root{ --cardSize: 120px; --gap: 8px; --bottomH: calc(var(--cardSize) + 14px); }
-      .card{ font-size: 58px; }
-      .hudCard{ padding: 8px 10px; }
+    .helpPaneScroll{
+      overflow:auto;
+      padding-right:4px;
+      max-height:var(--help-pane-minh);
     }
+    .helpCard{
+      border:1px solid rgba(148,163,184,.4);
+      background:#ffffff;
+      border-radius:14px;
+      padding:12px 12px;
+      margin:10px 0;
+      box-shadow:0 4px 10px rgba(148,163,184,.18);
+    }
+    .helpTitle{
+      font-weight:950;
+      letter-spacing:.4px;
+      margin:0 0 6px;
+      font-size:19px;
+      color:#0f172a;
+    }
+    .helpText{
+      color:rgba(15,23,42,.88);
+      margin:0;
+      font-size:17px;
+      line-height:1.75;
+    }
+    .noteLine{
+      display:flex; gap:10px; align-items:flex-start;
+      margin:8px 0;
+    }
+    .noteNum{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:26px; height:26px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.8);
+      background:#e5edff;
+      font-weight:950;
+      font-size:13px;
+      flex:0 0 auto;
+      margin-top:2px;
+      box-shadow:0 6px 16px rgba(148,163,184,.4);
+      color:#0f172a;
+    }
+    .kbd{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.7);
+      background:#e5edff;
+      font-variant-numeric:tabular-nums;
+      font-size:13px;
+      font-weight:900;
+      margin:0 2px;
+      color:#111827;
+      white-space:nowrap;
+    }
+    .mockTitle{
+      font-size:14px;
+      color:rgba(55,65,81,.90);
+      font-weight:900;
+      letter-spacing:.4px;
+      margin:0 0 10px;
+    }
+    .svgWrap{
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid rgba(148,163,184,.5);
+      background:#e5edff;
+      flex:1;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+    }
+    .svgWrap svg{width:100%; height:100%; display:block;}
   </style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="topLeft">
-      <button class="ghost" id="openRecordsBtn">遊戲紀錄</button>
+  <div class="app">
+    <!-- HOME -->
+    <div id="home" class="screen active">
+      <div class="title">排排看小遊戲</div>
+
+      <div class="difficultyRow">
+        <button class="diffBtn" data-diff="easy">簡單</button>
+        <button class="diffBtn" data-diff="mid">中等</button>
+        <button class="diffBtn" data-diff="hard">困難</button>
+      </div>
+
+      <div class="homeActions">
+        <button id="startGameBtn" class="primaryBtn" disabled>開始遊戲</button>
+        <button id="helpBtnHome" class="secondaryBtn">遊戲說明</button>
+        <button id="recordsBtnHome" class="secondaryBtn">遊戲紀錄</button>
+      </div>
     </div>
-    <div class="topRight">
-      <button class="ghost dangerBtn" id="exitGameBtn" style="display:none;">退出遊戲</button>
-    </div>
-  </div>
 
-  <main>
-    <div class="page">
-      <div class="container">
-
-        <div id="screenHome">
-          <section class="home">
-            <div class="title">排排看小遊戲</div>
-
-            <div class="difficultyRow" role="group" aria-label="選擇難度">
-              <button class="pill" data-d="easy" id="btnEasy" type="button">
-                <div class="name">簡單</div>
-                <div class="meta">3 回合：150s → 120s → 90s</div>
-              </button>
-              <button class="pill" data-d="mid" id="btnMid" type="button">
-                <div class="name">中等</div>
-                <div class="meta">3 回合：90s → 60s → 30s</div>
-              </button>
-              <button class="pill" data-d="hard" id="btnHard" type="button">
-                <div class="name">困難</div>
-                <div class="meta">3 回合：20s → 20s → 20s</div>
-              </button>
+    <!-- GAME -->
+    <div id="game" class="screen">
+      <div class="topbar">
+        <div class="reqBox">
+          <div class="reqLeft">
+            <div class="reqText" id="reqText">—</div>
+            <div class="reqMeta">
+              <span class="pill" id="roundPill">第 1 回合 / 共 3 回合</span>
+              <span class="pill" id="correctPill">已答對 0 題</span>
+              <span class="pill" id="diffPill">難度：—</span>
             </div>
-
-            <div class="startRow">
-              <button class="primary" id="startGameBtn" type="button" disabled>開始遊戲</button>
-            </div>
-          </section>
+          </div>
+          <div class="timer" id="timer">—秒</div>
         </div>
 
-        <div id="screenGame" style="display:none;">
-          <section class="game">
-            <div class="hud">
-              <div class="hudCard">
-                <div class="req">
-                  <p class="reqTitle" id="reqTitle">排出最大的數</p>
-                  <p class="reqMeta" id="reqMeta">第 1 回合 / 3　・　難度：簡單</p>
-                </div>
-                <div class="timer"><span id="timerText">--</span>秒</div>
-              </div>
-            </div>
-
-            <div class="board">
-              <div class="topArea" id="topArea"></div>
-              <div class="bottomArea">
-                <div class="cardGrid" id="cardGrid"></div>
-              </div>
-            </div>
-          </section>
+        <div class="topActions">
+          <button id="recordsBtnGame" class="iconBtn">遊戲紀錄</button>
+          <button id="helpBtnGame" class="iconBtn">遊戲說明</button>
+          <button id="leaveBtnGame" class="iconBtn">離開遊戲</button>
         </div>
-
       </div>
-    </div>
-  </main>
 
-  <div class="toast" id="toast"></div>
+      <div class="gameWrap">
+        <div class="gameMain">
+          <div class="upper">
+            <div class="panelHeader"><div></div><div class="panelTitle">作答欄</div><div></div></div>
+            <div class="slots" id="answerSlots"></div>
+          </div>
 
-  <!-- Records Modal -->
-  <div class="overlay" id="recordsOverlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="recordsTitle">
-      <div class="modalHeader">
-        <h3 id="recordsTitle">遊戲紀錄</h3>
-        <button class="btn" id="closeRecordsBtn" type="button">關閉</button>
-      </div>
-      <div class="modalBody">
-        <div class="small">顯示每次遊玩的難度與各回合用時（秒）。若答錯或超時，本輪會直接結束。</div>
-        <div class="hr"></div>
-        <div class="recordList" id="recordList"></div>
-        <div class="hr"></div>
-        <button class="btn danger" id="clearRecordsBtn" type="button">清除所有紀錄</button>
-      </div>
-      <div class="modalFooter">
-        <button class="btn" id="closeRecordsBtn2" type="button">關閉</button>
+          <div class="lower">
+            <div class="panelHeader"><div></div><div class="panelTitle">本回合使用的數字牌</div><div></div></div>
+            <div class="slots" id="deckSlots"></div>
+            <div class="submitArea" id="submitArea">
+              <button id="submitBtn" class="submitBtn">送出答案</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Result Modal (no close option) -->
-  <div class="overlay" id="resultOverlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+  <!-- MODAL -->
+  <div id="modalBackdrop" class="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
       <div class="modalHeader">
-        <h3 id="resultTitle">本輪結果</h3>
-        <div></div>
+        <h3 id="modalTitle">提示</h3>
+        <button id="modalClose" class="modalClose">關閉</button>
       </div>
-      <div class="modalBody" id="resultBody"></div>
-      <div class="modalFooter">
-        <button class="btn" id="backHomeBtn" type="button">回到選擇難度</button>
-        <button class="btn primary" id="playAgainBtn" type="button">重新挑戰</button>
-      </div>
+      <div class="modalBody" id="modalBody"></div>
+      <div class="modalActions" id="modalActions"></div>
     </div>
   </div>
+
+  <!-- 3-second countdown overlay -->
+  <div id="countdownOverlay" class="countdownOverlay" aria-hidden="true">
+    <div class="countdownBox">
+      <div class="countdownTitle">遊戲即將開始</div>
+      <div class="countdownNum" id="countdownNum">3</div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
 
 <script>
 (() => {
   const DIFF = {
-    easy: { label: "簡單", times: [150,120,90], color: getComputedStyle(document.documentElement).getPropertyValue('--easy').trim() },
-    mid:  { label: "中等", times: [90,60,30],   color: getComputedStyle(document.documentElement).getPropertyValue('--mid').trim() },
-    hard: { label: "困難", times: [20,20,20],   color: getComputedStyle(document.documentElement).getPropertyValue('--hard').trim() },
+    easy:{name:"簡單",limits:[150,120,90]},
+    mid:{name:"中等",limits:[90,60,30]},
+    hard:{name:"困難",limits:[20,20,20]}
   };
-  const ROUNDS = 3;
-  const STORAGE_KEY = "ppk_records_v8";
 
-  const screenHome = document.getElementById("screenHome");
-  const screenGame = document.getElementById("screenGame");
+  let selectedDiff = null;
 
-  const btnEasy = document.getElementById("btnEasy");
-  const btnMid  = document.getElementById("btnMid");
-  const btnHard = document.getElementById("btnHard");
+  let gameState = {
+    inGame:false,
+    diffKey:null,
+    roundIndex:0,
+    roundGoal:null,
+    digits:[],
+    limitSec:0,
+    startTs:0,
+    timerId:null,
+    remainingMs:0,
+    perRoundTimes:[]
+  };
+
+  let selectedCardEl = null;
+  let modalLocked = false;
+  let skipRecordThisGame = false;
+  let timeoutEndState = null;
+
+  let helpPage = 0;
+
+  const homeEl = document.getElementById("home");
+  const gameEl = document.getElementById("game");
+
+  const diffBtns = [...document.querySelectorAll(".diffBtn")];
   const startGameBtn = document.getElementById("startGameBtn");
+  const helpBtnHome = document.getElementById("helpBtnHome");
+  const helpBtnGame = document.getElementById("helpBtnGame");
+  const recordsBtnHome = document.getElementById("recordsBtnHome");
+  const recordsBtnGame = document.getElementById("recordsBtnGame");
+  const leaveBtnGame = document.getElementById("leaveBtnGame");
 
-  const reqTitle = document.getElementById("reqTitle");
-  const reqMeta  = document.getElementById("reqMeta");
-  const timerText = document.getElementById("timerText");
+  const reqTextEl = document.getElementById("reqText");
+  const timerEl = document.getElementById("timer");
+  const roundPillEl = document.getElementById("roundPill");
+  const correctPillEl = document.getElementById("correctPill");
+  const diffPillEl = document.getElementById("diffPill");
 
-  const topArea = document.getElementById("topArea");
-  const cardGrid = document.getElementById("cardGrid");
+  const answerSlotsEl = document.getElementById("answerSlots");
+  const deckSlotsEl = document.getElementById("deckSlots");
+  const submitBtn = document.getElementById("submitBtn");
 
-  const toast = document.getElementById("toast");
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalBody = document.getElementById("modalBody");
+  const modalActions = document.getElementById("modalActions");
+  const modalClose = document.getElementById("modalClose");
 
-  const openRecordsBtn = document.getElementById("openRecordsBtn");
-  const exitGameBtn = document.getElementById("exitGameBtn");
+  const countdownOverlay = document.getElementById("countdownOverlay");
+  const countdownNumEl = document.getElementById("countdownNum");
+  const toastEl = document.getElementById("toast");
 
-  const recordsOverlay = document.getElementById("recordsOverlay");
-  const closeRecordsBtn = document.getElementById("closeRecordsBtn");
-  const closeRecordsBtn2 = document.getElementById("closeRecordsBtn2");
-  const clearRecordsBtn = document.getElementById("clearRecordsBtn");
-  const recordList = document.getElementById("recordList");
+  function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+  function applyAutoScale(){
+    document.documentElement.style.setProperty("--ui-scale","1");
+    requestAnimationFrame(()=>{
+      const doc=document.documentElement;
+      const body=document.body;
+      const viewportH=window.innerHeight||doc.clientHeight;
+      const contentH=Math.max(body.scrollHeight,doc.scrollHeight);
+      if(contentH<=viewportH+1){
+        document.documentElement.style.setProperty("--ui-scale","1");
+        return;
+      }
+      const ratio=viewportH/contentH;
+      const scale=clamp(ratio*0.99,0.75,1);
+      document.documentElement.style.setProperty("--ui-scale",String(scale));
+    });
+  }
+  window.addEventListener("resize",applyAutoScale);
+  window.addEventListener("orientationchange",applyAutoScale);
+  function nudgeScaleSoon(){requestAnimationFrame(applyAutoScale); setTimeout(applyAutoScale,50);}
+  applyAutoScale();
 
-  const resultOverlay = document.getElementById("resultOverlay");
-  const resultBody = document.getElementById("resultBody");
-  const backHomeBtn = document.getElementById("backHomeBtn");
-  const playAgainBtn = document.getElementById("playAgainBtn");
-
-  let selectedDifficulty = null;
-
-  let game = {
-    difficulty: null,
-    roundIndex: 0,
-    roundLimit: 0,
-    requirement: null,
-    digits: [],
-    slots: [null,null,null,null],
-    used: new Set(),
-    startAt: 0,
-    tickTimer: null,
-    remain: 0,
-    timesUsed: [],
-    ended: false,
-  };
-
-  const pad2 = (n) => String(n).padStart(2, "0");
-
-  function showToast(msg){
-    toast.textContent = msg;
-    toast.classList.add("show");
+  const pad2 = n => String(n).padStart(2,"0");
+  function nowLocalString(){
+    const d=new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function showToast(msg,ms=900){
+    toastEl.textContent=msg;
+    toastEl.classList.add("show");
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => toast.classList.remove("show"), 1400);
+    showToast._t=setTimeout(()=>toastEl.classList.remove("show"),ms);
+  }
+  function openModal({title,bodyHTML,actions=[],showClose=false,lock=false}){
+    modalLocked=!!lock;
+    modalTitle.textContent=title;
+    modalBody.innerHTML=bodyHTML;
+    modalActions.innerHTML="";
+    modalClose.style.display=showClose?"inline-block":"none";
+
+    for(const a of actions){
+      const btn=document.createElement("button");
+      btn.className="miniBtn"+(a.primary?" primary":"");
+      btn.textContent=a.label;
+      if(a.disabled){btn.disabled=true;}
+      else{btn.addEventListener("click",()=>a.onClick?.());}
+      modalActions.appendChild(btn);
+    }
+
+    modalBackdrop.classList.add("show");
+    modalBackdrop.setAttribute("aria-hidden","false");
+    nudgeScaleSoon();
+  }
+  function forceCloseModal(){
+    modalLocked=false;
+    timeoutEndState=null;
+    modalBackdrop.classList.remove("show");
+    modalBackdrop.setAttribute("aria-hidden","true");
+    nudgeScaleSoon();
+  }
+  function switchScreen(toGame){
+    if(toGame){homeEl.classList.remove("active"); gameEl.classList.add("active");}
+    else{gameEl.classList.remove("active"); homeEl.classList.add("active");}
+    nudgeScaleSoon();
   }
 
-  function pick4DistinctDigits(){
-    const pool = Array.from({length:10}, (_,i)=>i);
+  function randomUniqueDigits(count=4){
+    const pool=[...Array(10)].map((_,i)=>i);
     for(let i=pool.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
+      const j=Math.floor(Math.random()*(i+1));
+      [pool[i],pool[j]]=[pool[j],pool[i]];
     }
-    return pool.slice(0,4);
+    return pool.slice(0,count);
+  }
+  function computeAnswer(goal,digits){
+    const sorted=[...digits].sort((a,b)=>goal==="max"?b-a:a-b);
+    return sorted.join("");
+  }
+  function computeAnswerDigits(goal,digits){
+    return [...digits].sort((a,b)=>goal==="max"?b-a:a-b);
+  }
+  function secondsText(ms){
+    const s=Math.ceil(ms/1000);
+    return `${s}秒`;
   }
 
-  function computeTarget(digits, requirement){
-    const sorted = [...digits].sort((a,b)=>a-b);
-    return Number(requirement === "max" ? sorted.slice().reverse().join("") : sorted.join(""));
-  }
-
-  function currentAnswerFromSlots(){
-    if(game.slots.some(v => v === null)) return null;
-    return Number(game.slots.join(""));
-  }
-
-  function setScreen(name){
-    if(name === "home"){
-      screenHome.style.display = "";
-      screenGame.style.display = "none";
-      exitGameBtn.style.display = "none";
-    }else{
-      screenHome.style.display = "none";
-      screenGame.style.display = "";
-      exitGameBtn.style.display = "";
+  function clearTapSelection(){
+    if(selectedCardEl){
+      selectedCardEl.classList.remove("selected");
+      selectedCardEl=null;
     }
+    [...document.querySelectorAll(".slot")].forEach(s=>s.classList.remove("selectedTarget"));
   }
 
-  function setDifficulty(d){
-    selectedDifficulty = d;
-    [btnEasy, btnMid, btnHard].forEach(b => b.classList.remove("selected"));
-    ({ easy: btnEasy, mid: btnMid, hard: btnHard })[d].classList.add("selected");
-    startGameBtn.disabled = false;
+  /* ==== HELP SVG (改為僅用標號圓點，沒有亂線) ==== */
+  function noteLines(items){
+    return items.map(([n,text])=>`
+      <div class="noteLine">
+        <span class="noteNum">${n}</span>
+        <div class="helpText">${text}</div>
+      </div>
+    `).join("");
+  }
+  function svgFocusRect({x,y,w,h}){
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="16" fill="none" stroke="rgba(37,99,235,.9)" stroke-width="3"/>`;
+  }
+  function svgBadge({n,x,y}){
+    return `
+      <g>
+        <circle cx="${x}" cy="${y}" r="15" fill="#111827" stroke="#e5edff" stroke-width="2.4"/>
+        <text x="${x}" y="${y+5}" text-anchor="middle" font-size="14" font-weight="900" fill="#f9fafb">${n}</text>
+      </g>
+    `;
   }
 
-  function stopTimer(){
-    if(game.tickTimer){
-      clearInterval(game.tickTimer);
-      game.tickTimer = null;
+  function svgHomeFull({mode}){
+    const base=`
+    <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="22" width="856" height="476" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.7)"/>
+      <text x="450" y="110" text-anchor="middle" font-size="46" font-weight="900" fill="#0f172a">排排看小遊戲</text>
+
+      <!-- difficulty row -->
+      <rect x="160" y="165" width="580" height="86" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+
+      <rect x="190" y="186" width="160" height="44" rx="16" fill="#dcfce7" stroke="rgba(34,197,94,.9)" stroke-width="3"/>
+      <text x="270" y="214" text-anchor="middle" font-size="20" font-weight="900" fill="#064e3b">簡單</text>
+
+      <rect x="370" y="186" width="160" height="44" rx="16" fill="#fef9c3" stroke="rgba(234,179,8,.9)" stroke-width="3"/>
+      <text x="450" y="214" text-anchor="middle" font-size="20" font-weight="900" fill="#78350f">中等</text>
+
+      <rect x="550" y="186" width="160" height="44" rx="16" fill="#ffedd5" stroke="rgba(249,115,22,.9)" stroke-width="3"/>
+      <text x="630" y="214" text-anchor="middle" font-size="20" font-weight="900" fill="#7c2d12">困難</text>
+
+      <!-- main buttons -->
+      <rect x="240" y="285" width="420" height="66" rx="20" fill="#111827" stroke="rgba(15,23,42,.9)" />
+      <text x="450" y="326" text-anchor="middle" font-size="22" font-weight="900" fill="#f9fafb">開始遊戲</text>
+
+      <rect x="240" y="365" width="420" height="58" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <text x="450" y="401" text-anchor="middle" font-size="20" font-weight="900" fill="#111827">遊戲說明</text>
+
+      <rect x="240" y="435" width="420" height="58" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <text x="450" y="471" text-anchor="middle" font-size="20" font-weight="900" fill="#111827">遊戲紀錄</text>
+    `;
+    let overlays="";
+    if(mode==="start"){
+      overlays+=svgFocusRect({x:160,y:165,w:580,h:86});
+      overlays+=svgFocusRect({x:240,y:285,w:420,h:66});
+      overlays+=svgFocusRect({x:240,y:365,w:420,h:58});
+      overlays+=svgFocusRect({x:240,y:435,w:420,h:58});
+      overlays+=svgBadge({n:1,x:140,y:198});
+      overlays+=svgBadge({n:2,x:140,y:308});
+      overlays+=svgBadge({n:3,x:140,y:388});
+      overlays+=svgBadge({n:4,x:140,y:458});
     }
-  }
-
-  function exitToHome(){
-    stopTimer();
-    game.ended = true;
-    recordsOverlay.classList.remove("show");
-    resultOverlay.classList.remove("show");
-    setScreen("home");
-  }
-
-  function startGame(difficulty){
-    game.difficulty = difficulty;
-    game.roundIndex = 0;
-    game.timesUsed = [];
-    game.ended = false;
-    setScreen("game");
-    startRound(0);
-  }
-
-  function startTimer(limitSeconds){
-    stopTimer();
-    game.roundLimit = limitSeconds;
-    game.startAt = Date.now();
-    game.remain = limitSeconds;
-    timerText.textContent = game.remain;
-
-    game.tickTimer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - game.startAt) / 1000);
-      const remain = limitSeconds - elapsed;
-      game.remain = remain;
-      timerText.textContent = Math.max(0, remain);
-
-      if(remain <= 0){
-        stopTimer();
-        endGame(false, "超時");
-      }
-    }, 200);
-  }
-
-  // 丟到有牌的格子：舊牌退回下方
-  function placeDigitIntoSlot(digit, slotIndex){
-    if(game.used.has(digit)) return;
-
-    const prev = game.slots[slotIndex];
-    if(prev !== null){
-      game.used.delete(prev);
-      game.slots[slotIndex] = null;
+    if(mode==="diff"){
+      overlays+=svgFocusRect({x:160,y:165,w:580,h:86});
+      overlays+=svgBadge({n:1,x:270,y:176});
+      overlays+=svgBadge({n:2,x:450,y:176});
+      overlays+=svgBadge({n:3,x:630,y:176});
     }
-    game.used.add(digit);
-    game.slots[slotIndex] = digit;
+    return base+overlays+`</svg>`;
   }
 
-  function renderSlots(){
-    topArea.innerHTML = "";
-    for(let i=0;i<4;i++){
-      const slot = document.createElement("div");
-      slot.className = "slot";
+  function svgGameFull({mode}){
+    const base=`
+    <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="22" width="856" height="476" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
 
-      const value = game.slots[i];
+      <!-- topbar -->
+      <rect x="38" y="38" width="824" height="88" rx="18" fill="#e5edff" stroke="rgba(148,163,184,.8)"/>
 
-      if(value === null){
-        const label = document.createElement("div");
-        label.className = "slotLabel";
-        label.textContent = "拖曳放入";
-        slot.appendChild(label);
-      }else{
-        const card = document.createElement("div");
-        card.className = "slotCard";
-        card.textContent = String(value);
-        card.title = "點一下把卡牌收回";
-        card.addEventListener("click", () => {
-          game.used.delete(value);
-          game.slots[i] = null;
-          renderAll();
-        });
-        slot.appendChild(card);
-      }
+      <!-- reqBox left -->
+      <rect x="52" y="50" width="562" height="64" rx="16" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <text x="68" y="78" font-size="22" font-weight="900" fill="#0f172a">排出最大的數</text>
 
-      slot.addEventListener("dragover", (e) => { e.preventDefault(); slot.classList.add("over"); });
-      slot.addEventListener("dragleave", () => slot.classList.remove("over"));
-      slot.addEventListener("drop", (e) => {
-        e.preventDefault();
-        slot.classList.remove("over");
-        const digit = Number(e.dataTransfer.getData("text/plain"));
-        if(Number.isNaN(digit)) return;
-        if(game.used.has(digit)) return;
+      <!-- pills row -->
+      <rect x="68" y="88" width="520" height="22" rx="999" fill="#e5edff" stroke="rgba(148,163,184,.6)"/>
+      <text x="80" y="104" font-size="13" font-weight="900" fill="#4b5563">第 1 回合 / 共 3 回合　已答對 0 題　難度：中等</text>
 
-        placeDigitIntoSlot(digit, i);
-        renderAll();
-      });
+      <!-- timer -->
+      <rect x="522" y="60" width="82" height="44" rx="12" fill="#111827" stroke="rgba(15,23,42,.9)"/>
+      <text x="563" y="88" text-anchor="middle" font-size="18" font-weight="900" fill="#f9fafb">30 秒</text>
 
-      topArea.appendChild(slot);
+      <!-- buttons right -->
+      <rect x="628" y="56" width="74" height="50" rx="14" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <text x="665" y="86" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">遊戲紀錄</text>
+
+      <rect x="710" y="56" width="74" height="50" rx="14" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <text x="747" y="86" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">遊戲說明</text>
+
+      <rect x="792" y="56" width="70" height="50" rx="14" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <text x="827" y="86" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">離開遊戲</text>
+
+      <!-- upper panel -->
+      <rect x="38" y="144" width="824" height="162" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
+      <text x="450" y="178" text-anchor="middle" font-size="18" font-weight="900" fill="#6b7280">作答欄</text>
+
+      <!-- answer slots -->
+      <g>
+        <rect x="156" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="288" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="420" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="552" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+      </g>
+
+      <!-- lower panel -->
+      <rect x="38" y="320" width="824" height="178" rx="22" fill="#eef2ff" stroke="rgba(148,163,184,.8)"/>
+      <text x="450" y="354" text-anchor="middle" font-size="18" font-weight="900" fill="#6b7280">本回合使用的數字牌</text>
+
+      <!-- deck slots -->
+      <g>
+        <rect x="156" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="288" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="420" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="552" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+      </g>
+    `;
+    let overlays="";
+    if(mode==="topInfo"){
+      overlays+=svgFocusRect({x:52,y:50,w:562,h:64});
+      overlays+=svgBadge({n:1,x:80,y:68});   // 目標
+      overlays+=svgBadge({n:2,x:80,y:104});  // 狀態
+      overlays+=svgFocusRect({x:522,y:60,w:82,h:44});
+      overlays+=svgBadge({n:3,x:563,y:54});  // 計時
     }
-  }
-
-  function submitAnswer(){
-    const ans = currentAnswerFromSlots();
-    if(ans === null){
-      showToast("還沒放滿 4 張卡牌");
-      return;
+    if(mode==="actions"){
+      overlays+=svgFocusRect({x:628,y:56,w:234,h:50});
+      overlays+=svgBadge({n:1,x:665,y:50});
+      overlays+=svgBadge({n:2,x:747,y:50});
+      overlays+=svgBadge({n:3,x:827,y:50});
     }
-
-    const target = computeTarget(game.digits, game.requirement);
-    const usedSeconds = game.roundLimit - Math.max(0, game.remain);
-
-    if(ans === target){
-      game.timesUsed.push(usedSeconds);
-      stopTimer();
-
-      if(game.roundIndex + 1 < ROUNDS){
-        showToast("答對，進入下一回合");
-        setTimeout(() => startRound(game.roundIndex + 1), 420);
-      }else{
-        endGame(true, "全部答對");
-      }
-    }else{
-      endGame(false, "答錯");
+    if(mode==="areas"){
+      overlays+=svgFocusRect({x:38,y:144,w:824,h:162});
+      overlays+=svgFocusRect({x:38,y:320,w:824,h:178});
+      overlays+=svgBadge({n:1,x:90,y:210});
+      overlays+=svgBadge({n:2,x:90,y:386});
     }
-  }
-
-  // 下方牌區：四張都放上去後，改成「送出答案」出現在同一區塊
-  function renderBottom(){
-    cardGrid.innerHTML = "";
-    const allPlaced = game.slots.every(v => v !== null);
-
-    if(allPlaced){
-      const submitCell = document.createElement("div");
-      submitCell.className = "submitCell";
-
-      const btn = document.createElement("button");
-      btn.className = "submitBtn";
-      btn.type = "button";
-      btn.textContent = "送出答案";
-      btn.addEventListener("click", submitAnswer);
-
-      submitCell.appendChild(btn);
-      cardGrid.appendChild(submitCell);
-      return;
-    }
-
-    for(let i=0;i<4;i++){
-      const d = game.digits[i];
-      const cell = document.createElement("div");
-      cell.className = "cardCell";
-
-      if(game.used.has(d)){
-        const ph = document.createElement("div");
-        ph.className = "placeholder";
-        cell.appendChild(ph);
-      }else{
-        const card = document.createElement("div");
-        card.className = "card";
-        card.textContent = String(d);
-        card.draggable = true;
-        card.addEventListener("dragstart", (e) => {
-          e.dataTransfer.setData("text/plain", String(d));
-          e.dataTransfer.effectAllowed = "move";
-        });
-        cell.appendChild(card);
-      }
-      cardGrid.appendChild(cell);
-    }
-  }
-
-  // 難度標示文字上色
-  function renderHUD(){
-    const d = DIFF[game.difficulty];
-    reqTitle.textContent = game.requirement === "max" ? "排出最大的數" : "排出最小的數";
-    reqMeta.innerHTML =
-      `第 ${game.roundIndex+1} 回合 / ${ROUNDS}　・　` +
-      `難度：<span style="color:${d.color}; font-weight:950;">${d.label}</span>`;
-  }
-
-  function renderAll(){
-    renderHUD();
-    renderSlots();
-    renderBottom();
-  }
-
-  function startRound(roundIndex){
-    game.roundIndex = roundIndex;
-    game.slots = [null,null,null,null];
-    game.used = new Set();
-
-    game.digits = pick4DistinctDigits();
-    game.requirement = Math.random() < 0.5 ? "max" : "min";
-
-    const limit = DIFF[game.difficulty].times[roundIndex];
-    startTimer(limit);
-
-    renderAll();
-  }
-
-  /* Records / Result */
-  function loadRecords(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    }catch{ return []; }
-  }
-  function saveRecord(rec){
-    const list = loadRecords();
-    list.unshift(rec);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 50)));
-  }
-  function clearRecords(){ localStorage.removeItem(STORAGE_KEY); }
-
-  function badgeHTML(diffKey){
-    const d = DIFF[diffKey];
-    const dot = `<span class="bDot" style="background:${d.color}"></span>`;
-    return `<span class="badge">${dot}${d.label}</span>`;
-  }
-
-  function renderRecords(){
-    const list = loadRecords();
-    recordList.innerHTML = "";
-
-    if(list.length === 0){
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "目前還沒有遊戲紀錄。";
-      recordList.appendChild(empty);
-      return;
-    }
-
-    list.forEach((r) => {
-      const item = document.createElement("div");
-      item.className = "recordItem";
-
-      const at = new Date(r.at);
-      const when = `${at.getFullYear()}-${pad2(at.getMonth()+1)}-${pad2(at.getDate())} ${pad2(at.getHours())}:${pad2(at.getMinutes())}`;
-
-      const top = document.createElement("div");
-      top.className = "recordTop";
-      top.innerHTML = `
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-          ${badgeHTML(r.difficulty)}
-          <span class="badge" style="color:${r.success ? 'rgba(22,163,74,.95)' : 'rgba(220,38,38,.95)'}">
-            ${r.success ? "成功" : "失敗"}（${r.reason}）
-          </span>
-          <span class="badge">${when}</span>
-        </div>
+    if(mode==="submit"){
+      overlays+=svgFocusRect({x:150,y:206,w:530,h:88});    // 作答欄四格
+      overlays+=svgBadge({n:1,x:90,y:230});
+      overlays+=`
+        <rect x="260" y="456" width="380" height="44" rx="16" fill="#111827" stroke="rgba(15,23,42,.9)"/>
+        <text x="450" y="484" text-anchor="middle" font-size="18" font-weight="900" fill="#f9fafb">送出答案</text>
       `;
-      item.appendChild(top);
+      overlays+=svgBadge({n:2,x:90,y:472});
+    }
+    return base+overlays+`</svg>`;
+  }
 
-      const times = document.createElement("div");
-      times.className = "times";
-      const lines = [];
-      for(let i=0;i<ROUNDS;i++){
-        const t = r.timesUsed[i];
-        if(typeof t === "number") lines.push(`第 ${i+1} 回合：${t} 秒`);
-        else lines.push(`第 ${i+1} 回合：—`);
+  function svgCountdownFull(){
+    return `
+    <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="22" width="856" height="476" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
+      <rect x="200" y="140" width="500" height="260" rx="22" fill="#ffffff" stroke="rgba(148,163,184,.9)"/>
+      <text x="450" y="210" text-anchor="middle" font-size="22" font-weight="900" fill="#4b5563">遊戲即將開始</text>
+      <text x="450" y="320" text-anchor="middle" font-size="110" font-weight="900" fill="#0f172a">3</text>
+
+      ${svgFocusRect({x:200,y:140,w:500,h:260})}
+      ${svgBadge({n:1,x:180,y:200})}
+      ${svgBadge({n:2,x:180,y:320})}
+    </svg>`;
+  }
+
+  function buildHelpPages(){
+    return [
+      {
+        title:"遊戲說明 1/9｜主畫面：怎麼開始玩",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">跟著做就能開始</div>
+                  ${noteLines([
+                    [1,"先選一個難度（簡單／中等／困難）。"],
+                    [2,"再按「開始遊戲」。"],
+                    [3,"想看教學，就按「遊戲說明」。"],
+                    [4,"想看以前成績，就按「遊戲紀錄」。"]
+                  ])}
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">小提醒</div>
+                  <p class="helpText">你一定要先選難度，開始遊戲才會亮起來。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">主畫面</div>
+              <div class="svgWrap">${svgHomeFull({mode:"start"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 2/9｜難度是什麼意思",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">每一輪有 3 回合</div>
+                  <p class="helpText">你要在時間內，把 4 張數字牌排出「最大」或「最小」的數。</p>
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">三個難度的時間</div>
+                  ${noteLines([
+                    [1,"簡單：150 秒 → 120 秒 → 90 秒。"],
+                    [2,"中等：90 秒 → 60 秒 → 30 秒。"],
+                    [3,"困難：20 秒 → 20 秒 → 20 秒。"]
+                  ])}
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">難度按鈕</div>
+              <div class="svgWrap">${svgHomeFull({mode:"diff"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 3/9｜開始前會先倒數 3 秒",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">倒數時不會扣時間</div>
+                  ${noteLines([
+                    [1,"你可以先看清楚畫面，準備要怎麼排。"],
+                    [2,"倒數到 0 才會開始計時。"]
+                  ])}
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">倒數畫面</div>
+              <div class="svgWrap">${svgCountdownFull()}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 4/9｜回合目標：要排最大還是最小",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">你要做的事</div>
+                  ${noteLines([
+                    [1,"上方會告訴你：這回合要排「最大」或「最小」。"],
+                    [2,"用 4 張牌排成一個 4 位數。"]
+                  ])}
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">例子</div>
+                  <p class="helpText">抽到 2、7、5、8，如果要排最大，就會是 8752。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">上方資訊</div>
+              <div class="svgWrap">${svgGameFull({mode:"topInfo"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 5/9｜倒數計時在哪裡看",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">看右邊的時間</div>
+                  ${noteLines([
+                    [3,"右邊顯示還剩幾秒（例如 30 秒）。"],
+                    [2,"下面那一行顯示：第幾回合、已答對幾題、目前難度。"]
+                  ])}
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">時間到了會怎樣？</div>
+                  <p class="helpText">如果時間變成 0，就會直接結束，並顯示正確答案。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">時間與狀態</div>
+              <div class="svgWrap">${svgGameFull({mode:"topInfo"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 6/9｜作答欄與數字牌說明",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">兩個區塊各做什麼</div>
+                  ${noteLines([
+                    [1,"作答欄：把牌放到上面四格，排出你的答案。"],
+                    [2,"數字牌：這回合抽到的四張牌，從下面拿去放。"]
+                  ])}
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">可以放哪裡？</div>
+                  <p class="helpText">你可以把牌放在任何格子裡，上下都可以互換位置。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">作答欄與數字牌</div>
+              <div class="svgWrap">${svgGameFull({mode:"areas"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 7/9｜怎麼移動卡牌",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">兩種方法都可以</div>
+                  ${noteLines([
+                    [1,"拖曳：用滑鼠把卡牌拖到想放的格子。"],
+                    [2,"點選：先點卡牌，再點你要放的格子。"],
+                    [3,"如果那格已經有牌，兩張會自動交換位置。"]
+                  ])}
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">小提醒</div>
+                  <p class="helpText">如果你不想選那張牌了，再點一次卡牌就能取消。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">對照畫面</div>
+              <div class="svgWrap">${svgGameFull({mode:"areas"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 8/9｜右上角的三個按鈕",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">這三個按鈕做什麼</div>
+                  ${noteLines([
+                    [1,"遊戲紀錄：查看以前玩過的成績。"],
+                    [2,"遊戲說明：再打開這份教學。"],
+                    [3,"離開遊戲：回到主畫面（這次不會記錄）。"]
+                  ])}
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">右上角按鈕</div>
+              <div class="svgWrap">${svgGameFull({mode:"actions"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 9/9｜送出答案與結算",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">送出答案怎麼出現</div>
+                  ${noteLines([
+                    [1,"把四張牌都放到作答欄（上面四格都放滿）。"],
+                    [2,"下面會出現「送出答案」，按下去就交卷。"]
+                  ])}
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">結算規則</div>
+                  ${noteLines([
+                    [3,"答對：進入下一回合。第三回合答對就通關。"],
+                    [4,"答錯或超時：本輪結束，會顯示正確答案。"]
+                  ])}
+                  <p class="helpText" style="margin-top:8px;">小技巧：也可以按 <span class="kbd">Enter</span> 送出（送出答案出現時才有效）。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">送出答案</div>
+              <div class="svgWrap">${svgGameFull({mode:"submit"})}</div>
+            </div>
+          </div>
+        `
       }
-      times.textContent = lines.join("\n");
-      item.appendChild(times);
+    ];
+  }
 
-      recordList.appendChild(item);
+  function openHelp(pageIdx=0){
+    const pages=buildHelpPages();
+    helpPage=Math.max(0,Math.min(pages.length-1,pageIdx));
+    const p=pages[helpPage];
+    const isFirst=helpPage===0;
+    const isLast=helpPage===pages.length-1;
+
+    openModal({
+      title:p.title,
+      bodyHTML:p.body,
+      actions:[
+        {label:"上一頁",disabled:isFirst,onClick:()=>openHelp(helpPage-1)},
+        {label:"下一頁",disabled:isLast,onClick:()=>openHelp(helpPage+1)},
+        {label:"關閉",primary:true,onClick:()=>{forceCloseModal();}}
+      ],
+      showClose:false,
+      lock:true
     });
   }
 
-  function openRecords(){
-    renderRecords();
-    recordsOverlay.classList.add("show");
-    recordsOverlay.setAttribute("aria-hidden","false");
+  /* ===== Records ===== */
+  const REC_KEY="ppk_records_v2";
+  function loadRecords(){
+    try{
+      const raw=localStorage.getItem(REC_KEY);
+      if(!raw) return [];
+      const arr=JSON.parse(raw);
+      return Array.isArray(arr)?arr:[];
+    }catch{return [];}
   }
-  function closeRecords(){
-    recordsOverlay.classList.remove("show");
-    recordsOverlay.setAttribute("aria-hidden","true");
+  function saveRecords(records){
+    localStorage.setItem(REC_KEY,JSON.stringify(records));
+  }
+  function resultLabel(result){
+    if(result==="win")return"通關";
+    if(result==="timeout")return"超時失敗";
+    if(result==="wrong")return"答錯失敗";
+    return"—";
+  }
+  function addRecord(record){
+    const records=loadRecords();
+    records.unshift(record);
+    saveRecords(records.slice(0,50));
+  }
+  function formatTimesForTable(r){
+    const out=[];
+    for(let i=0;i<3;i++){
+      const idx=i+1;
+      if(i<(r.times?.length||0)){
+        out.push(`第${idx}回合：${r.times[i]}s`);
+        continue;
+      }
+      if(r.result==="timeout" && r.failRound===idx){
+        out.push(`第${idx}回合：超時`);
+        continue;
+      }
+      if(r.result==="wrong" && r.failRound===idx){
+        out.push(`第${idx}回合：答錯`);
+        continue;
+      }
+      out.push(`第${idx}回合：—`);
+    }
+    return out.join("<br/>");
+  }
+  function buildRecordsTableHTML(){
+    const records=loadRecords();
+    if(records.length===0){
+      return `<div style="color:rgba(55,65,81,.90); font-weight:900;">目前沒有紀錄。</div>`;
+    }
+    const rows=records.map(r=>{
+      const diffName=DIFF[r.diffKey]?.name ?? r.diffKey;
+      const tagClass=r.diffKey==="easy"?"easy":(r.diffKey==="mid"?"mid":"hard");
+      return `
+        <tr>
+          <td><span class="tag ${tagClass}">${diffName}</span></td>
+          <td><span class="tag">${resultLabel(r.result)}</span></td>
+          <td>${formatTimesForTable(r)}</td>
+          <td style="color:rgba(75,85,99,.9);">${r.playedAt}</td>
+        </tr>`;
+    }).join("");
+    return `
+      <table>
+        <thead>
+          <tr>
+            <th style="width:110px;">難度</th>
+            <th style="width:110px;">結果</th>
+            <th>每回合用時／狀態</th>
+            <th style="width:190px;">時間</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+  function showRecordsModalStandalone(){
+    openModal({
+      title:"遊戲紀錄",
+      bodyHTML:buildRecordsTableHTML(),
+      actions:[
+        {label:"清空紀錄",onClick:()=>{saveRecords([]); showToast("已清空紀錄",1100); showRecordsModalStandalone();}},
+        {label:"關閉",primary:true,onClick:forceCloseModal}
+      ],
+      showClose:false,
+      lock:false
+    });
   }
 
-  function showResult(record){
-    const completed = record.timesUsed.length;
-    const lines = [];
-    for(let i=0;i<ROUNDS;i++){
-      const t = record.timesUsed[i];
-      if(typeof t === "number") lines.push(`<li>第 ${i+1} 回合：<b>${t}</b> 秒</li>`);
-      else lines.push(`<li>第 ${i+1} 回合：—</li>`);
+  /* ==== Drag / Drop ==== */
+  function makeSlot(){
+    const slot=document.createElement("div");
+    slot.className="slot";
+
+    slot.addEventListener("click",()=>{
+      if(modalBackdrop.classList.contains("show"))return;
+      if(countdownOverlay.classList.contains("show"))return;
+      if(!selectedCardEl)return;
+      const fromSlot=selectedCardEl.parentElement?.classList.contains("slot")?selectedCardEl.parentElement:null;
+      if(!fromSlot)return;
+      if(fromSlot===slot){clearTapSelection(); return;}
+
+      swapOrMoveCard(fromSlot,slot,selectedCardEl);
+      clearTapSelection();
+      updateSubmitVisibility();
+    });
+
+    slot.addEventListener("dragover",e=>{e.preventDefault(); slot.classList.add("over");});
+    slot.addEventListener("dragleave",()=>slot.classList.remove("over"));
+    slot.addEventListener("drop",e=>{
+      e.preventDefault();
+      slot.classList.remove("over");
+      const draggedId=e.dataTransfer.getData("text/plain");
+      const draggedCard=document.getElementById(draggedId);
+      if(!draggedCard)return;
+      const fromSlot=draggedCard.parentElement?.classList.contains("slot")?draggedCard.parentElement:null;
+      if(!fromSlot)return;
+      if(fromSlot===slot)return;
+      swapOrMoveCard(fromSlot,slot,draggedCard);
+      updateSubmitVisibility();
+    });
+
+    return slot;
+  }
+
+  function makeCard(digit,id){
+    const card=document.createElement("div");
+    card.className="card";
+    card.textContent=String(digit);
+    card.id=id;
+    card.draggable=true;
+
+    card.addEventListener("dragstart",e=>{
+      e.dataTransfer.setData("text/plain",card.id);
+      e.dataTransfer.effectAllowed="move";
+      clearTapSelection();
+    });
+
+    card.addEventListener("click",e=>{
+      e.stopPropagation();
+      if(modalBackdrop.classList.contains("show"))return;
+      if(countdownOverlay.classList.contains("show"))return;
+
+      if(selectedCardEl===card){
+        clearTapSelection();
+        return;
+      }
+      clearTapSelection();
+      selectedCardEl=card;
+      card.classList.add("selected");
+      [...document.querySelectorAll(".slot")].forEach(s=>s.classList.add("selectedTarget"));
+    });
+
+    return card;
+  }
+
+  function swapOrMoveCard(fromSlot,toSlot,movingCard){
+    const targetCard=toSlot.querySelector(".card");
+    if(targetCard){fromSlot.appendChild(targetCard);}
+    toSlot.appendChild(movingCard);
+  }
+
+  function renderBoard(digits){
+    clearTapSelection();
+    answerSlotsEl.innerHTML="";
+    deckSlotsEl.innerHTML="";
+
+    for(let i=0;i<4;i++){
+      answerSlotsEl.appendChild(makeSlot());
+      deckSlotsEl.appendChild(makeSlot());
+    }
+    digits.forEach((d,i)=>{
+      const card=makeCard(d,`card_${Date.now()}_${i}`);
+      deckSlotsEl.children[i].appendChild(card);
+    });
+
+    updateSubmitVisibility();
+    nudgeScaleSoon();
+  }
+
+  function setSubmitVisible(visible){
+    submitBtn.style.visibility=visible?"visible":"hidden";
+    submitBtn.style.pointerEvents=visible?"auto":"none";
+  }
+  function updateSubmitVisibility(){
+    const deckHasCard=[...deckSlotsEl.querySelectorAll(".slot")].some(s=>s.querySelector(".card"));
+    setSubmitVisible(!deckHasCard);
+  }
+  function readAnswerString(){
+    const slots=[...answerSlotsEl.querySelectorAll(".slot")];
+    const cards=slots.map(s=>s.querySelector(".card"));
+    if(cards.some(c=>!c))return null;
+    return cards.map(c=>c.textContent).join("");
+  }
+
+  /* ==== Game flow ==== */
+  function stopTimer(){
+    if(gameState.timerId){
+      clearInterval(gameState.timerId);
+      gameState.timerId=null;
+    }
+  }
+  function setTopbarText(){
+    const goalText=gameState.roundGoal==="max"?"排出最大的數":"排出最小的數";
+    reqTextEl.textContent=goalText;
+    timerEl.textContent=secondsText(gameState.remainingMs);
+    roundPillEl.textContent=`第 ${gameState.roundIndex+1} 回合 / 共 3 回合`;
+    correctPillEl.textContent=`已答對 ${gameState.perRoundTimes.length} 題`;
+    diffPillEl.textContent=`難度：${DIFF[gameState.diffKey]?.name ?? "—"}`;
+  }
+  function startRoundCountdownTimer(){
+    stopTimer();
+    gameState.startTs=performance.now();
+    gameState.remainingMs=gameState.limitSec*1000;
+    setTopbarText();
+
+    gameState.timerId=setInterval(()=>{
+      const elapsed=performance.now()-gameState.startTs;
+      const left=Math.max(0,gameState.limitSec*1000-elapsed);
+      gameState.remainingMs=left;
+      timerEl.textContent=secondsText(left);
+      if(left<=0){
+        stopTimer();
+        endGame(false,"timeout","時間到，這一輪結束。");
+      }
+    },120);
+  }
+  function setupRound(){
+    clearTapSelection();
+    gameState.digits=randomUniqueDigits(4);
+    gameState.roundGoal=Math.random()<0.5?"max":"min";
+    gameState.limitSec=DIFF[gameState.diffKey].limits[gameState.roundIndex];
+    renderBoard(gameState.digits);
+    gameState.remainingMs=gameState.limitSec*1000;
+    setTopbarText();
+  }
+  function runStartCountdown3s(){
+    return new Promise(resolve=>{
+      let n=3;
+      countdownNumEl.textContent=String(n);
+      countdownOverlay.classList.add("show");
+      countdownOverlay.setAttribute("aria-hidden","false");
+      nudgeScaleSoon();
+      const tick=()=>{
+        n-=1;
+        if(n<=0){
+          countdownOverlay.classList.remove("show");
+          countdownOverlay.setAttribute("aria-hidden","true");
+          nudgeScaleSoon();
+          resolve();
+          return;
+        }
+        countdownNumEl.textContent=String(n);
+        setTimeout(tick,1000);
+      };
+      setTimeout(tick,1000);
+    });
+  }
+  async function startGame(){
+    skipRecordThisGame=false;
+    gameState.inGame=true;
+    gameState.roundIndex=0;
+    gameState.perRoundTimes=[];
+    switchScreen(true);
+    timerEl.textContent="—秒";
+    reqTextEl.textContent="—";
+    setupRound();
+    await runStartCountdown3s();
+    if(!gameState.inGame)return;
+    startRoundCountdownTimer();
+  }
+
+  function buildResultCardsHTML(goal,digits){
+    const correctDigits=computeAnswerDigits(goal,digits);
+    const used=digits.map(d=>`<div class="miniCard">${d}</div>`).join("");
+    const correct=correctDigits.map(d=>`<div class="miniCard">${d}</div>`).join("");
+    return `
+      <div class="resultBlock">
+        <div class="resultLabel">本回合使用的數字牌</div>
+        <div class="cardRow">${used}</div>
+      </div>
+      <div class="resultBlock">
+        <div class="resultLabel">正確答案</div>
+        <div class="cardRow">${correct}</div>
+      </div>
+      <div style="height: var(--result-bottom-gap);"></div>
+    `;
+  }
+
+  function showTimeoutEndSummary(){
+    if(!timeoutEndState)return;
+    openModal({
+      title:timeoutEndState.title,
+      bodyHTML:timeoutEndState.bodyHTML,
+      actions:[
+        {label:"查看紀錄",onClick:showTimeoutEndRecords},
+        {label:"返回主畫面",primary:true,onClick:()=>{forceCloseModal(); switchScreen(false);}}
+      ],
+      showClose:false,
+      lock:true
+    });
+  }
+  function showTimeoutEndRecords(){
+    openModal({
+      title:"查看紀錄",
+      bodyHTML:buildRecordsTableHTML(),
+      actions:[
+        {label:"清空紀錄",onClick:()=>{saveRecords([]); showToast("已清空紀錄",1100); showTimeoutEndRecords();}},
+        {label:"返回結算",primary:true,onClick:showTimeoutEndSummary}
+      ],
+      showClose:false,
+      lock:true
+    });
+  }
+
+  function formatTimesForEndModal(result){
+    const out=[];
+    for(let i=0;i<3;i++){
+      const idx=i+1;
+      if(i<gameState.perRoundTimes.length){
+        out.push(`<div>第${idx}回合：<strong>${gameState.perRoundTimes[i]}s</strong></div>`);
+        continue;
+      }
+      if(result==="timeout" && (gameState.roundIndex+1)===idx){
+        out.push(`<div>第${idx}回合：<strong>超時</strong></div>`);
+        continue;
+      }
+      if(result==="wrong" && (gameState.roundIndex+1)===idx){
+        out.push(`<div>第${idx}回合：<strong>答錯</strong></div>`);
+        continue;
+      }
+      out.push(`<div>第${idx}回合：<span style="color:rgba(148,163,184,.9);">—</span></div>`);
+    }
+    return out.join("");
+  }
+
+  function endGame(win,endType,reasonText){
+    stopTimer();
+    clearTapSelection();
+    if(!gameState.inGame)return;
+    gameState.inGame=false;
+
+    const title=win?"通關成功":"遊戲結束";
+
+    if(!skipRecordThisGame){
+      const record={
+        diffKey:gameState.diffKey,
+        times:[...gameState.perRoundTimes],
+        playedAt:nowLocalString(),
+        result:win?"win":endType,
+        failRound:win?null:(gameState.roundIndex+1)
+      };
+      addRecord(record);
     }
 
-    resultBody.innerHTML = `
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        ${badgeHTML(record.difficulty)}
-        <span class="badge" style="color:${record.success ? 'rgba(22,163,74,.95)' : 'rgba(220,38,38,.95)'}">
-          ${record.success ? "成功" : "失敗"}（${record.reason}）
-        </span>
+    const showCorrectCards=!win;
+    const body=`
+      <div>
+        ${reasonText?`<div style="margin-bottom:12px;">${reasonText}</div>`:""}
+        <div><span style="color:rgba(75,85,99,.95); font-weight:900;">難度：</span><strong>${DIFF[gameState.diffKey].name}</strong></div>
+        <div style="margin-top:10px;">
+          <span style="color:rgba(75,85,99,.95); font-weight:900;">這局結果：</span>
+          <strong>${resultLabel(win?"win":endType)}</strong>
+        </div>
+        <div style="margin-top:10px;">
+          <span style="color:rgba(75,85,99,.95); font-weight:900;">每回合用時：</span>
+          <div style="margin-top:8px;">
+            ${formatTimesForEndModal(win?"win":endType)}
+          </div>
+        </div>
+        ${showCorrectCards?buildResultCardsHTML(gameState.roundGoal,gameState.digits):""}
       </div>
-      <div class="hr"></div>
-      <div class="small">已完成回合：${completed} / ${ROUNDS}</div>
-      <ul style="margin:10px 0 0 18px; color: rgba(17,24,39,.92); line-height:1.7; font-weight: 950;">
-        ${lines.join("")}
-      </ul>
     `;
 
-    resultOverlay.classList.add("show");
-    resultOverlay.setAttribute("aria-hidden","false");
+    if(endType==="timeout"){
+      timeoutEndState={title,bodyHTML:body};
+      showTimeoutEndSummary();
+      return;
+    }
+
+    openModal({
+      title,
+      bodyHTML:body,
+      actions:[
+        {label:"回到主畫面",primary:true,onClick:()=>{forceCloseModal(); switchScreen(false);}},
+        {label:"查看紀錄",onClick:()=>{forceCloseModal(); showRecordsModalStandalone();}}
+      ],
+      showClose:false,
+      lock:false
+    });
   }
 
-  function endGame(success, reason){
-    if(game.ended) return;
-    game.ended = true;
+  function submitAnswer(){
+    if(!gameState.inGame)return;
+    const ans=readAnswerString();
+    if(ans==null){
+      showToast("作答欄還沒放滿四張牌");
+      return;
+    }
+    const correct=computeAnswer(gameState.roundGoal,gameState.digits);
     stopTimer();
 
-    const record = {
-      at: new Date().toISOString(),
-      difficulty: game.difficulty,
-      success,
-      reason,
-      timesUsed: [...game.timesUsed],
-    };
-    saveRecord(record);
-    showResult(record);
-  }
+    const elapsedSec=Math.round((performance.now()-gameState.startTs)/1000);
+    gameState.perRoundTimes.push(elapsedSec);
 
-  // Events
-  btnEasy.addEventListener("click", () => setDifficulty("easy"));
-  btnMid.addEventListener("click",  () => setDifficulty("mid"));
-  btnHard.addEventListener("click", () => setDifficulty("hard"));
-
-  startGameBtn.addEventListener("click", () => {
-    if(!selectedDifficulty) return;
-    startGame(selectedDifficulty);
-  });
-
-  openRecordsBtn.addEventListener("click", openRecords);
-  closeRecordsBtn.addEventListener("click", closeRecords);
-  closeRecordsBtn2.addEventListener("click", closeRecords);
-
-  recordsOverlay.addEventListener("click", (e) => {
-    if(e.target === recordsOverlay) closeRecords();
-  });
-
-  clearRecordsBtn.addEventListener("click", () => {
-    clearRecords();
-    renderRecords();
-    showToast("已清除所有紀錄");
-  });
-
-  exitGameBtn.addEventListener("click", exitToHome);
-
-  backHomeBtn.addEventListener("click", () => {
-    resultOverlay.classList.remove("show");
-    resultOverlay.setAttribute("aria-hidden","true");
-    setScreen("home");
-  });
-
-  playAgainBtn.addEventListener("click", () => {
-    resultOverlay.classList.remove("show");
-    resultOverlay.setAttribute("aria-hidden","true");
-    startGame(game.difficulty || selectedDifficulty || "easy");
-  });
-
-  // init placeholder slots
-  function initSlots(){
-    topArea.innerHTML = "";
-    for(let i=0;i<4;i++){
-      const slot = document.createElement("div");
-      slot.className = "slot";
-      const label = document.createElement("div");
-      label.className = "slotLabel";
-      label.textContent = "開始後可拖曳放入";
-      slot.appendChild(label);
-      topArea.appendChild(slot);
+    if(ans===correct){
+      if(gameState.roundIndex===2){
+        endGame(true,"win","三回合都答對了。");
+      }else{
+        showToast("答對了，進入下一回合",900);
+        gameState.roundIndex+=1;
+        setupRound();
+        startRoundCountdownTimer();
+      }
+    }else{
+      endGame(false,"wrong",`答案不對。你排的是 <strong>${ans}</strong>，正確答案是 <strong>${correct}</strong>。`);
     }
   }
 
-  initSlots();
-  setScreen("home");
+  function leaveGame(){
+    skipRecordThisGame=true;
+    stopTimer();
+    clearTapSelection();
+    countdownOverlay.classList.remove("show");
+    forceCloseModal();
+    gameState.inGame=false;
+    switchScreen(false);
+  }
+
+  /* ==== Events ==== */
+  diffBtns.forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      diffBtns.forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedDiff=btn.dataset.diff;
+      startGameBtn.disabled=false;
+      nudgeScaleSoon();
+    });
+  });
+
+  startGameBtn.addEventListener("click",()=>{
+    if(!selectedDiff)return;
+    gameState.diffKey=selectedDiff;
+    startGame();
+  });
+
+  helpBtnHome.addEventListener("click",()=>openHelp(0));
+  helpBtnGame.addEventListener("click",()=>openHelp(3));
+
+  recordsBtnHome.addEventListener("click",showRecordsModalStandalone);
+  recordsBtnGame.addEventListener("click",showRecordsModalStandalone);
+
+  leaveBtnGame.addEventListener("click",()=>{
+    openModal({
+      title:"離開遊戲",
+      bodyHTML:`<div>確定要離開遊戲回到主畫面嗎？<br/><span style="color:rgba(75,85,99,.95); font-weight:900;">這次不會記錄成績。</span></div>`,
+      actions:[
+        {label:"取消",onClick:forceCloseModal},
+        {label:"離開",primary:true,onClick:()=>{forceCloseModal(); leaveGame();}}
+      ],
+      showClose:false,
+      lock:false
+    });
+  });
+
+  submitBtn.addEventListener("click",submitAnswer);
+
+  modalClose.addEventListener("click",()=>{if(modalLocked)return; forceCloseModal();});
+  modalBackdrop.addEventListener("click",e=>{
+    if(e.target!==modalBackdrop)return;
+    if(modalLocked)return;
+    forceCloseModal();
+  });
+
+  window.addEventListener("keydown",e=>{
+    if(e.key==="Enter" && gameState.inGame && submitBtn.style.visibility!=="hidden"
+       && !modalBackdrop.classList.contains("show")
+       && !countdownOverlay.classList.contains("show")){
+      submitAnswer();
+    }
+    if(e.key==="Escape" && modalBackdrop.classList.contains("show")){
+      if(modalLocked)return;
+      forceCloseModal();
+    }
+  });
+
+  setSubmitVisible(false);
+  nudgeScaleSoon();
+
+  /* 一打開網頁就自動跳出遊戲說明 */
+  setTimeout(()=>{
+    if(!modalBackdrop.classList.contains("show")){
+      openHelp(0);
+    }
+  },120);
 })();
 </script>
 </body>
