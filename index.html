@@ -40,9 +40,10 @@
       --home-diff-bottom:46px;
       --home-bottom-pad:12px;
 
-      --help-modal-w:1380px;
-      --help-body-maxh:86vh;
-      --help-pane-minh:560px;
+      /* 說明視窗整體縮小，避免遮住標題與按鈕 */
+      --help-modal-w:1120px;
+      --help-body-maxh:72vh;
+      --help-pane-minh:380px;
     }
 
     *{box-sizing:border-box}
@@ -374,7 +375,7 @@
       padding:12px 12px 10px;
       color:var(--text);
       line-height:1.7;
-      font-size:18px;
+      font-size:17px;
       max-height:var(--help-body-maxh);
       overflow:auto;
       background:#ffffff;
@@ -389,13 +390,13 @@
       align-items:center;
     }
     .miniBtn{
-      padding:12px 14px;
+      padding:10px 14px;
       border-radius:12px;
       border:1px solid var(--line);
       background:#ffffff;
       color:var(--text);
       cursor:pointer;
-      font-size:16px;
+      font-size:15px;
       font-weight:900;
       box-shadow:0 4px 12px rgba(148,163,184,.18);
     }
@@ -519,7 +520,7 @@
       min-height:var(--help-pane-minh);
       display:flex;
       flex-direction:column;
-      justify-content:center;
+      justify-content:flex-start; /* 文字從上方開始排，視覺滿版 */
       overflow:hidden;
     }
     .helpPaneScroll{
@@ -701,7 +702,8 @@
     startTs:0,
     timerId:null,
     remainingMs:0,
-    perRoundTimes:[]
+    perRoundTimes:[],
+    lastAnswerDigits:null   // 新增：記錄玩家這回合實際排出的數字順序
   };
 
   let selectedCardEl = null;
@@ -836,7 +838,7 @@
     [...document.querySelectorAll(".slot")].forEach(s=>s.classList.remove("selectedTarget"));
   }
 
-  /* ==== HELP SVG (改為僅用標號圓點，沒有亂線) ==== */
+  /* ==== HELP SVG ==== */
   function noteLines(items){
     return items.map(([n,text])=>`
       <div class="noteLine">
@@ -860,47 +862,51 @@
   function svgHomeFull({mode}){
     const base=`
     <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+      <!-- 外框與主畫面 -->
       <rect x="22" y="22" width="856" height="476" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.7)"/>
-      <text x="450" y="110" text-anchor="middle" font-size="46" font-weight="900" fill="#0f172a">排排看小遊戲</text>
+      <text x="450" y="100" text-anchor="middle" font-size="46" font-weight="900" fill="#0f172a">排排看小遊戲</text>
 
-      <!-- difficulty row -->
-      <rect x="160" y="165" width="580" height="86" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <!-- 難度列（位置與實際畫面一致，置中排列） -->
+      <g>
+        <rect x="160" y="150" width="580" height="90" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.4)"/>
+        <rect x="180" y="168" width="160" height="54" rx="16" fill="#dcfce7" stroke="rgba(34,197,94,.9)" stroke-width="3"/>
+        <text x="260" y="202" text-anchor="middle" font-size="20" font-weight="900" fill="#064e3b">簡單</text>
 
-      <rect x="190" y="186" width="160" height="44" rx="16" fill="#dcfce7" stroke="rgba(34,197,94,.9)" stroke-width="3"/>
-      <text x="270" y="214" text-anchor="middle" font-size="20" font-weight="900" fill="#064e3b">簡單</text>
+        <rect x="370" y="168" width="160" height="54" rx="16" fill="#fef9c3" stroke="rgba(234,179,8,.9)" stroke-width="3"/>
+        <text x="450" y="202" text-anchor="middle" font-size="20" font-weight="900" fill="#78350f">中等</text>
 
-      <rect x="370" y="186" width="160" height="44" rx="16" fill="#fef9c3" stroke="rgba(234,179,8,.9)" stroke-width="3"/>
-      <text x="450" y="214" text-anchor="middle" font-size="20" font-weight="900" fill="#78350f">中等</text>
+        <rect x="560" y="168" width="160" height="54" rx="16" fill="#ffedd5" stroke="rgba(249,115,22,.9)" stroke-width="3"/>
+        <text x="640" y="202" text-anchor="middle" font-size="20" font-weight="900" fill="#7c2d12">困難</text>
+      </g>
 
-      <rect x="550" y="186" width="160" height="44" rx="16" fill="#ffedd5" stroke="rgba(249,115,22,.9)" stroke-width="3"/>
-      <text x="630" y="214" text-anchor="middle" font-size="20" font-weight="900" fill="#7c2d12">困難</text>
+      <!-- 三個主要按鈕，與實際畫面等寬置中 -->
+      <g>
+        <rect x="240" y="270" width="420" height="70" rx="20" fill="#111827" stroke="rgba(15,23,42,.9)"/>
+        <text x="450" y="312" text-anchor="middle" font-size="22" font-weight="900" fill="#f9fafb">開始遊戲</text>
 
-      <!-- main buttons -->
-      <rect x="240" y="285" width="420" height="66" rx="20" fill="#111827" stroke="rgba(15,23,42,.9)" />
-      <text x="450" y="326" text-anchor="middle" font-size="22" font-weight="900" fill="#f9fafb">開始遊戲</text>
+        <rect x="240" y="356" width="420" height="60" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+        <text x="450" y="392" text-anchor="middle" font-size="20" font-weight="900" fill="#111827">遊戲說明</text>
 
-      <rect x="240" y="365" width="420" height="58" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
-      <text x="450" y="401" text-anchor="middle" font-size="20" font-weight="900" fill="#111827">遊戲說明</text>
-
-      <rect x="240" y="435" width="420" height="58" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
-      <text x="450" y="471" text-anchor="middle" font-size="20" font-weight="900" fill="#111827">遊戲紀錄</text>
+        <rect x="240" y="430" width="420" height="60" rx="20" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+        <text x="450" y="466" text-anchor="middle" font-size="20" font-weight="900" fill="#111827">遊戲紀錄</text>
+      </g>
     `;
     let overlays="";
     if(mode==="start"){
-      overlays+=svgFocusRect({x:160,y:165,w:580,h:86});
-      overlays+=svgFocusRect({x:240,y:285,w:420,h:66});
-      overlays+=svgFocusRect({x:240,y:365,w:420,h:58});
-      overlays+=svgFocusRect({x:240,y:435,w:420,h:58});
-      overlays+=svgBadge({n:1,x:140,y:198});
-      overlays+=svgBadge({n:2,x:140,y:308});
-      overlays+=svgBadge({n:3,x:140,y:388});
-      overlays+=svgBadge({n:4,x:140,y:458});
+      overlays+=svgFocusRect({x:160,y:150,w:580,h:90});
+      overlays+=svgFocusRect({x:240,y:270,w:420,h:70});
+      overlays+=svgFocusRect({x:240,y:356,w:420,h:60});
+      overlays+=svgFocusRect({x:240,y:430,w:420,h:60});
+      overlays+=svgBadge({n:1,x:140,y:190});
+      overlays+=svgBadge({n:2,x:140,y:300});
+      overlays+=svgBadge({n:3,x:140,y:380});
+      overlays+=svgBadge({n:4,x:140,y:454});
     }
     if(mode==="diff"){
-      overlays+=svgFocusRect({x:160,y:165,w:580,h:86});
-      overlays+=svgBadge({n:1,x:270,y:176});
-      overlays+=svgBadge({n:2,x:450,y:176});
-      overlays+=svgBadge({n:3,x:630,y:176});
+      overlays+=svgFocusRect({x:160,y:150,w:580,h:90});
+      overlays+=svgBadge({n:1,x:260,y:146});
+      overlays+=svgBadge({n:2,x:450,y:146});
+      overlays+=svgBadge({n:3,x:640,y:146});
     }
     return base+overlays+`</svg>`;
   }
@@ -908,85 +914,92 @@
   function svgGameFull({mode}){
     const base=`
     <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+      <!-- 外框 -->
       <rect x="22" y="22" width="856" height="476" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
 
-      <!-- topbar -->
+      <!-- 上方列（對應實際 topbar） -->
       <rect x="38" y="38" width="824" height="88" rx="18" fill="#e5edff" stroke="rgba(148,163,184,.8)"/>
 
-      <!-- reqBox left -->
-      <rect x="52" y="50" width="562" height="64" rx="16" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
-      <text x="68" y="78" font-size="22" font-weight="900" fill="#0f172a">排出最大的數</text>
+      <!-- 題目與狀態框（對應 reqBox） -->
+      <rect x="48" y="46" width="580" height="72" rx="16" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+      <text x="64" y="76" font-size="22" font-weight="900" fill="#0f172a">請排出最大的數</text>
 
-      <!-- pills row -->
-      <rect x="68" y="88" width="520" height="22" rx="999" fill="#e5edff" stroke="rgba(148,163,184,.6)"/>
-      <text x="80" y="104" font-size="13" font-weight="900" fill="#4b5563">第 1 回合 / 共 3 回合　已答對 0 題　難度：中等</text>
+      <!-- 狀態 pill 列（字串壓成一行示意） -->
+      <rect x="64" y="88" width="548" height="24" rx="12" fill="#eef2ff" stroke="rgba(148,163,184,.6)"/>
+      <text x="70" y="104" font-size="13" font-weight="900" fill="#4b5563">
+        第 1 回合 / 共 3 回合　已答對 0 題　難度：中等
+      </text>
 
-      <!-- timer -->
-      <rect x="522" y="60" width="82" height="44" rx="12" fill="#111827" stroke="rgba(15,23,42,.9)"/>
-      <text x="563" y="88" text-anchor="middle" font-size="18" font-weight="900" fill="#f9fafb">30 秒</text>
+      <!-- 計時器（對應 timer） -->
+      <rect x="640" y="52" width="100" height="48" rx="12" fill="#111827" stroke="rgba(15,23,42,.9)"/>
+      <text x="690" y="82" text-anchor="middle" font-size="18" font-weight="900" fill="#f9fafb">30 秒</text>
 
-      <!-- buttons right -->
-      <rect x="628" y="56" width="74" height="50" rx="14" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
-      <text x="665" y="86" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">遊戲紀錄</text>
-
-      <rect x="710" y="56" width="74" height="50" rx="14" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
-      <text x="747" y="86" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">遊戲說明</text>
-
-      <rect x="792" y="56" width="70" height="50" rx="14" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
-      <text x="827" y="86" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">離開遊戲</text>
-
-      <!-- upper panel -->
-      <rect x="38" y="144" width="824" height="162" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
-      <text x="450" y="178" text-anchor="middle" font-size="18" font-weight="900" fill="#6b7280">作答欄</text>
-
-      <!-- answer slots -->
+      <!-- 右上角按鈕區（與實際版面留有間距） -->
       <g>
-        <rect x="156" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
-        <rect x="288" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
-        <rect x="420" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
-        <rect x="552" y="214" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="752" y="46" width="88" height="30" rx="12" fill="none"/>
+        <!-- 實際按鈕一組 -->
+        <rect x="756" y="50" width="80" height="28" rx="12" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+        <text x="796" y="69" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">遊戲紀錄</text>
+
+        <rect x="756" y="82" width="80" height="28" rx="12" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+        <text x="796" y="101" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">遊戲說明</text>
+
+        <rect x="756" y="114" width="80" height="28" rx="12" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+        <text x="796" y="133" text-anchor="middle" font-size="13" font-weight="900" fill="#111827">離開遊戲</text>
       </g>
 
-      <!-- lower panel -->
-      <rect x="38" y="320" width="824" height="178" rx="22" fill="#eef2ff" stroke="rgba(148,163,184,.8)"/>
-      <text x="450" y="354" text-anchor="middle" font-size="18" font-weight="900" fill="#6b7280">本回合使用的數字牌</text>
+      <!-- 上方作答欄 panel -->
+      <rect x="38" y="140" width="824" height="162" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
+      <text x="450" y="172" text-anchor="middle" font-size="18" font-weight="900" fill="#6b7280">作答欄</text>
 
-      <!-- deck slots -->
+      <!-- 作答欄四格，與實際畫面水平置中，不歪斜 -->
       <g>
-        <rect x="156" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
-        <rect x="288" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
-        <rect x="420" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
-        <rect x="552" y="388" width="120" height="72" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="156" y="200" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="288" y="200" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="420" y="200" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="552" y="200" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+      </g>
+
+      <!-- 下方數字牌 panel -->
+      <rect x="38" y="320" width="824" height="178" rx="22" fill="#eef2ff" stroke="rgba(148,163,184,.8)"/>
+      <text x="450" y="352" text-anchor="middle" font-size="18" font-weight="900" fill="#6b7280">本回合使用的數字牌</text>
+
+      <!-- 數字牌四格，與作答欄上下對齊、寬度一致 -->
+      <g>
+        <rect x="156" y="380" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="288" y="380" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="420" y="380" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
+        <rect x="552" y="380" width="120" height="76" rx="16" fill="#e5edff" stroke="rgba(148,163,184,.9)" stroke-dasharray="8 8"/>
       </g>
     `;
     let overlays="";
     if(mode==="topInfo"){
-      overlays+=svgFocusRect({x:52,y:50,w:562,h:64});
-      overlays+=svgBadge({n:1,x:80,y:68});   // 目標
-      overlays+=svgBadge({n:2,x:80,y:104});  // 狀態
-      overlays+=svgFocusRect({x:522,y:60,w:82,h:44});
-      overlays+=svgBadge({n:3,x:563,y:54});  // 計時
-    }
-    if(mode==="actions"){
-      overlays+=svgFocusRect({x:628,y:56,w:234,h:50});
-      overlays+=svgBadge({n:1,x:665,y:50});
-      overlays+=svgBadge({n:2,x:747,y:50});
-      overlays+=svgBadge({n:3,x:827,y:50});
+      overlays+=svgFocusRect({x:48,y:46,w:580,h:72});  // 題目與狀態
+      overlays+=svgBadge({n:1,x:70,y:60});              // 題目
+      overlays+=svgBadge({n:2,x:70,y:112});             // 回合與難度
+      overlays+=svgFocusRect({x:640,y:52,w:100,h:48});  // 計時器
+      overlays+=svgBadge({n:3,x:690,y:46});             // 倒數秒數
     }
     if(mode==="areas"){
-      overlays+=svgFocusRect({x:38,y:144,w:824,h:162});
+      overlays+=svgFocusRect({x:38,y:140,w:824,h:162});
       overlays+=svgFocusRect({x:38,y:320,w:824,h:178});
-      overlays+=svgBadge({n:1,x:90,y:210});
-      overlays+=svgBadge({n:2,x:90,y:386});
+      overlays+=svgBadge({n:1,x:70,y:210});             // 作答欄
+      overlays+=svgBadge({n:2,x:70,y:390});             // 數字牌
+    }
+    if(mode==="actions"){
+      overlays+=svgFocusRect({x:748,y:48,w:88,h:96});
+      overlays+=svgBadge({n:1,x:740,y:62});             // 遊戲紀錄
+      overlays+=svgBadge({n:2,x:740,y:94});             // 遊戲說明
+      overlays+=svgBadge({n:3,x:740,y:126});            // 離開遊戲
     }
     if(mode==="submit"){
-      overlays+=svgFocusRect({x:150,y:206,w:530,h:88});    // 作答欄四格
-      overlays+=svgBadge({n:1,x:90,y:230});
+      overlays+=svgFocusRect({x:150,y:196,w:530,h:88});   // 上面四格
+      overlays+=svgBadge({n:1,x:120,y:214});              // 作答欄要放滿
       overlays+=`
         <rect x="260" y="456" width="380" height="44" rx="16" fill="#111827" stroke="rgba(15,23,42,.9)"/>
         <text x="450" y="484" text-anchor="middle" font-size="18" font-weight="900" fill="#f9fafb">送出答案</text>
       `;
-      overlays+=svgBadge({n:2,x:90,y:472});
+      overlays+=svgBadge({n:2,x:120,y:472});             // 送出答案按鈕
     }
     return base+overlays+`</svg>`;
   }
@@ -995,258 +1008,289 @@
     return `
     <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
       <rect x="22" y="22" width="856" height="476" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
-      <rect x="200" y="140" width="500" height="260" rx="22" fill="#ffffff" stroke="rgba(148,163,184,.9)"/>
-      <text x="450" y="210" text-anchor="middle" font-size="22" font-weight="900" fill="#4b5563">遊戲即將開始</text>
-      <text x="450" y="320" text-anchor="middle" font-size="110" font-weight="900" fill="#0f172a">3</text>
+      <rect x="210" y="150" width="480" height="240" rx="22" fill="#ffffff" stroke="rgba(148,163,184,.9)"/>
+      <text x="450" y="214" text-anchor="middle" font-size="22" font-weight="900" fill="#4b5563">遊戲即將開始</text>
+      <text x="450" y="324" text-anchor="middle" font-size="110" font-weight="900" fill="#0f172a">3</text>
 
-      ${svgFocusRect({x:200,y:140,w:500,h:260})}
-      ${svgBadge({n:1,x:180,y:200})}
-      ${svgBadge({n:2,x:180,y:320})}
+      ${svgFocusRect({x:210,y:150,w:480,h:80})}
+      ${svgBadge({n:1,x:192,y:190})}
+      ${svgFocusRect({x:210,y:230,w:480,h:160})}
+      ${svgBadge({n:2,x:192,y:300})}
     </svg>`;
   }
+
+  /* 重新設計的 9 頁說明，文字改為「說明式」寫法，三年級可理解 */
 
   function buildHelpPages(){
     return [
       {
-        title:"遊戲說明 1/9｜主畫面：怎麼開始玩",
+        title:"遊戲說明 1/9｜主畫面與開始方式",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">跟著做就能開始</div>
+                  <div class="helpTitle">主畫面上的三個步驟</div>
                   ${noteLines([
-                    [1,"先選一個難度（簡單／中等／困難）。"],
-                    [2,"再按「開始遊戲」。"],
-                    [3,"想看教學，就按「遊戲說明」。"],
-                    [4,"想看以前成績，就按「遊戲紀錄」。"]
+                    [1,"須先在中間選擇一個難度（簡單／中等／困難）。"],
+                    [2,"選好難度後，「開始遊戲」按鈕會亮起，按下即可進入遊戲。"],
+                    [3,"下方的「遊戲說明」可以再打開這份教學；「遊戲紀錄」可以查看之前的成績。"]
                   ])}
                 </div>
                 <div class="helpCard">
-                  <div class="helpTitle">小提醒</div>
-                  <p class="helpText">你一定要先選難度，開始遊戲才會亮起來。</p>
+                  <div class="helpTitle">一局遊戲的基本結構</div>
+                  <p class="helpText">
+                    每一局共有 3 回合。每一回合都會抽出 4 張數字牌，依照題目要求排成「最大」或「最小」的四位數。
+                  </p>
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">主畫面</div>
+              <div class="mockTitle">主畫面示意（與實際畫面對齊）</div>
               <div class="svgWrap">${svgHomeFull({mode:"start"})}</div>
             </div>
           </div>
         `
       },
       {
-        title:"遊戲說明 2/9｜難度是什麼意思",
+        title:"遊戲說明 2/9｜難度與時間限制",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">每一輪有 3 回合</div>
-                  <p class="helpText">你要在時間內，把 4 張數字牌排出「最大」或「最小」的數。</p>
+                  <div class="helpTitle">每種難度的時間（每局 3 回合）</div>
+                  ${noteLines([
+                    [1,"簡單：第 1 回合 150 秒，第 2 回合 120 秒，第 3 回合 90 秒。"],
+                    [2,"中等：第 1 回合 90 秒，第 2 回合 60 秒，第 3 回合 30 秒。"],
+                    [3,"困難：三個回合都是 20 秒。"]
+                  ])}
+                  <p class="helpText" style="margin-top:10px;">
+                    每回合開始時計時會重新從頭倒數。時間歸零時，代表這一局遊戲結束。
+                  </p>
                 </div>
                 <div class="helpCard">
-                  <div class="helpTitle">三個難度的時間</div>
-                  ${noteLines([
-                    [1,"簡單：150 秒 → 120 秒 → 90 秒。"],
-                    [2,"中等：90 秒 → 60 秒 → 30 秒。"],
-                    [3,"困難：20 秒 → 20 秒 → 20 秒。"]
-                  ])}
+                  <div class="helpTitle">難度的意義</div>
+                  <p class="helpText">
+                    數字牌的規則在各難度中相同，差別在於<strong>思考與排出正確答案的時間長度</strong>。
+                    選擇較高難度時，需要在較短時間內完成同樣的任務。
+                  </p>
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">難度按鈕</div>
+              <div class="mockTitle">主畫面難度按鈕</div>
               <div class="svgWrap">${svgHomeFull({mode:"diff"})}</div>
             </div>
           </div>
         `
       },
       {
-        title:"遊戲說明 3/9｜開始前會先倒數 3 秒",
+        title:"遊戲說明 3/9｜開始前的 3 秒倒數",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">倒數時不會扣時間</div>
+                  <div class="helpTitle">倒數畫面與用意</div>
                   ${noteLines([
-                    [1,"你可以先看清楚畫面，準備要怎麼排。"],
-                    [2,"倒數到 0 才會開始計時。"]
+                    [1,"按下「開始遊戲」後，會先出現 3 秒倒數畫面。倒數期間，尚未開始扣除回合時間。"],
+                    [2,"倒數結束後，才會跳到正式的遊戲畫面並開始計時。"]
                   ])}
+                  <p class="helpText" style="margin-top:10px;">
+                    倒數的時間可以用來先看清楚畫面結構，了解題目位置、作答欄與數字牌欄的擺放方式。
+                  </p>
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">倒數畫面</div>
+              <div class="mockTitle">倒數示意（與實際樣式一致）</div>
               <div class="svgWrap">${svgCountdownFull()}</div>
             </div>
           </div>
         `
       },
       {
-        title:"遊戲說明 4/9｜回合目標：要排最大還是最小",
+        title:"遊戲說明 4/9｜上方題目與狀態欄",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">你要做的事</div>
+                  <div class="helpTitle">上方白色框中的資訊</div>
                   ${noteLines([
-                    [1,"上方會告訴你：這回合要排「最大」或「最小」。"],
-                    [2,"用 4 張牌排成一個 4 位數。"]
+                    [1,"上方大字會顯示本回合的題目，例如「請排出最大的數」或「請排出最小的數」。"],
+                    [2,"題目下方的細字會依序說明：目前是第幾回合、這一局已答對幾題，以及選擇的難度。"],
+                    [3,"右側黑色方框顯示剩餘秒數，隨時間倒數。時間變成 0 時，遊戲會直接結束這一局。"]
                   ])}
-                </div>
-                <div class="helpCard">
-                  <div class="helpTitle">例子</div>
-                  <p class="helpText">抽到 2、7、5、8，如果要排最大，就會是 8752。</p>
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">上方資訊</div>
+              <div class="mockTitle">上方資訊欄示意</div>
               <div class="svgWrap">${svgGameFull({mode:"topInfo"})}</div>
             </div>
           </div>
         `
       },
       {
-        title:"遊戲說明 5/9｜倒數計時在哪裡看",
+        title:"遊戲說明 5/9｜作答欄與本回合的數字牌",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">看右邊的時間</div>
+                  <div class="helpTitle">兩個主要區塊的用途</div>
                   ${noteLines([
-                    [3,"右邊顯示還剩幾秒（例如 30 秒）。"],
-                    [2,"下面那一行顯示：第幾回合、已答對幾題、目前難度。"]
+                    [1,"上方「作答欄」：放置這一回合排出來的四位數。上面四格須放滿 4 張數字牌。"],
+                    [2,"下方「本回合使用的數字牌」：顯示本回合抽到的 4 張數字牌。每張牌都可以被拖曳或移動。"]
                   ])}
-                </div>
-                <div class="helpCard">
-                  <div class="helpTitle">時間到了會怎樣？</div>
-                  <p class="helpText">如果時間變成 0，就會直接結束，並顯示正確答案。</p>
+                  <p class="helpText" style="margin-top:10px;">
+                    上下兩排的框格在畫面中是上下對齊的直線，與實際遊戲畫面一致，便於辨識對應位置。
+                  </p>
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">時間與狀態</div>
-              <div class="svgWrap">${svgGameFull({mode:"topInfo"})}</div>
-            </div>
-          </div>
-        `
-      },
-      {
-        title:"遊戲說明 6/9｜作答欄與數字牌說明",
-        body:`
-          <div class="helpGrid">
-            <div class="helpPane">
-              <div class="helpPaneScroll">
-                <div class="helpCard">
-                  <div class="helpTitle">兩個區塊各做什麼</div>
-                  ${noteLines([
-                    [1,"作答欄：把牌放到上面四格，排出你的答案。"],
-                    [2,"數字牌：這回合抽到的四張牌，從下面拿去放。"]
-                  ])}
-                </div>
-                <div class="helpCard">
-                  <div class="helpTitle">可以放哪裡？</div>
-                  <p class="helpText">你可以把牌放在任何格子裡，上下都可以互換位置。</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="helpPane">
-              <div class="mockTitle">作答欄與數字牌</div>
+              <div class="mockTitle">作答欄與數字牌欄示意</div>
               <div class="svgWrap">${svgGameFull({mode:"areas"})}</div>
             </div>
           </div>
         `
       },
       {
-        title:"遊戲說明 7/9｜怎麼移動卡牌",
+        title:"遊戲說明 6/9｜移動卡牌的兩種方式",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">兩種方法都可以</div>
+                  <div class="helpTitle">卡牌移動規則</div>
                   ${noteLines([
-                    [1,"拖曳：用滑鼠把卡牌拖到想放的格子。"],
-                    [2,"點選：先點卡牌，再點你要放的格子。"],
-                    [3,"如果那格已經有牌，兩張會自動交換位置。"]
+                    [1,"卡牌可以由下方數字牌欄移動到上方作答欄的任一格。"],
+                    [2,"作答欄中的卡牌可以與其他格交換位置，也可以換回下方數字牌欄。"],
+                    [3,"拖曳操作：按住卡牌不放，拖到目標格後放開。"],
+                    [4,"點選操作：先點一下卡牌，再點要放置的格子；若格子內已有卡牌，兩張會互換位置。"]
                   ])}
-                </div>
-                <div class="helpCard">
-                  <div class="helpTitle">小提醒</div>
-                  <p class="helpText">如果你不想選那張牌了，再點一次卡牌就能取消。</p>
+                  <p class="helpText" style="margin-top:10px;">
+                    若再次點選同一張卡牌，會取消該張卡牌的選取狀態。
+                  </p>
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">對照畫面</div>
+              <div class="mockTitle">卡牌放置區域示意</div>
               <div class="svgWrap">${svgGameFull({mode:"areas"})}</div>
             </div>
           </div>
         `
       },
       {
-        title:"遊戲說明 8/9｜右上角的三個按鈕",
+        title:"遊戲說明 7/9｜送出答案與完成條件",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">這三個按鈕做什麼</div>
+                  <div class="helpTitle">何時可以送出答案</div>
                   ${noteLines([
-                    [1,"遊戲紀錄：查看以前玩過的成績。"],
-                    [2,"遊戲說明：再打開這份教學。"],
-                    [3,"離開遊戲：回到主畫面（這次不會記錄）。"]
+                    [1,"當作答欄的四個格子都放入數字牌時，下方會顯示「送出答案」按鈕。"],
+                    [2,"此時可以點擊「送出答案」，或按鍵盤上的 Enter 鍵送出。"]
+                  ])}
+                </div>
+                <div class="helpCard">
+                  <div class="helpTitle">一局遊戲的結束方式</div>
+                  ${noteLines([
+                    [3,"若答案與正確排法相同，視為「答對」。前兩回合答對後，會進入下一回合。"],
+                    [4,"若在任一回合答錯，或時間歸零，都會立即結束這一局，並顯示結算畫面。"],
+                    [5,"第三回合答對時，會顯示通關成功，同局三回合的用時也會一併記錄。"]
+                  ])}
+                  <p class="helpText" style="margin-top:10px;">
+                    結算畫面會列出此局每一回合的狀態與時間，並顯示本回合的正確答案與玩家實際排出的答案。
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="helpPane">
+              <div class="mockTitle">送出答案與結算關聯示意</div>
+              <div class="svgWrap">${svgGameFull({mode:"submit"})}</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        title:"遊戲說明 8/9｜右上角三個功能按鈕",
+        body:`
+          <div class="helpGrid">
+            <div class="helpPane">
+              <div class="helpPaneScroll">
+                <div class="helpCard">
+                  <div class="helpTitle">遊戲中隨時可以使用的功能</div>
+                  ${noteLines([
+                    [1,"「遊戲紀錄」：打開過去玩過的紀錄表，包含難度、每回合用時與結果。"],
+                    [2,"「遊戲說明」：在遊戲進行中再次叫出這份說明，不會影響目前回合的排牌狀態。"],
+                    [3,"「離開遊戲」：直接結束當前這一局，回到主畫面。本局不會被記錄在遊戲紀錄中。"]
                   ])}
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">右上角按鈕</div>
+              <div class="mockTitle">右上角按鈕區示意</div>
               <div class="svgWrap">${svgGameFull({mode:"actions"})}</div>
             </div>
           </div>
         `
       },
       {
-        title:"遊戲說明 9/9｜送出答案與結算",
+        title:"遊戲說明 9/9｜遊戲紀錄與再次挑戰",
         body:`
           <div class="helpGrid">
             <div class="helpPane">
               <div class="helpPaneScroll">
                 <div class="helpCard">
-                  <div class="helpTitle">送出答案怎麼出現</div>
-                  ${noteLines([
-                    [1,"把四張牌都放到作答欄（上面四格都放滿）。"],
-                    [2,"下面會出現「送出答案」，按下去就交卷。"]
-                  ])}
+                  <div class="helpTitle">遊戲紀錄表的內容</div>
+                  <p class="helpText">
+                    遊戲紀錄表會依照時間從新到舊排列。每一列記錄包括：<br>
+                    （1）遊玩時選擇的難度。<br>
+                    （2）此局結果為通關、答錯失敗或超時失敗。<br>
+                    （3）三個回合各自的用時，若在某一回合失敗，會顯示「答錯」或「超時」。<br>
+                    （4）遊玩日期與時間。
+                  </p>
                 </div>
                 <div class="helpCard">
-                  <div class="helpTitle">結算規則</div>
-                  ${noteLines([
-                    [3,"答對：進入下一回合。第三回合答對就通關。"],
-                    [4,"答錯或超時：本輪結束，會顯示正確答案。"]
-                  ])}
-                  <p class="helpText" style="margin-top:8px;">小技巧：也可以按 <span class="kbd">Enter</span> 送出（送出答案出現時才有效）。</p>
+                  <div class="helpTitle">清空紀錄與重新遊玩</div>
+                  <p class="helpText">
+                    在遊戲紀錄視窗中，可選擇清空全部紀錄，以便重新收集新的成績。返回主畫面後，只要再次選擇難度並按下「開始遊戲」，即可開啟新的一局。
+                  </p>
                 </div>
               </div>
             </div>
 
             <div class="helpPane">
-              <div class="mockTitle">送出答案</div>
-              <div class="svgWrap">${svgGameFull({mode:"submit"})}</div>
+              <div class="mockTitle">紀錄表與再次挑戰（文字示意）</div>
+              <div class="svgWrap">
+                <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="22" y="22" width="856" height="476" rx="22" fill="#f9fafb" stroke="rgba(148,163,184,.8)"/>
+                  <rect x="60" y="70" width="780" height="310" rx="16" fill="#ffffff" stroke="rgba(148,163,184,.8)"/>
+                  <text x="450" y="104" text-anchor="middle" font-size="20" font-weight="900" fill="#0f172a">遊戲紀錄表（示意）</text>
+                  <rect x="80" y="120" width="740" height="40" fill="#f3f4ff"/>
+                  <text x="110" y="145" font-size="14" font-weight="900" fill="#6b7280">難度</text>
+                  <text x="210" y="145" font-size="14" font-weight="900" fill="#6b7280">結果</text>
+                  <text x="420" y="145" font-size="14" font-weight="900" fill="#6b7280">各回合用時／狀態</text>
+                  <text x="720" y="145" font-size="14" font-weight="900" fill="#6b7280">時間</text>
+
+                  ${svgBadge({n:1,x:70,y:120})}
+                  ${svgBadge({n:2,x:70,y:280})}
+                </svg>
+              </div>
             </div>
           </div>
         `
@@ -1460,11 +1504,15 @@
     const deckHasCard=[...deckSlotsEl.querySelectorAll(".slot")].some(s=>s.querySelector(".card"));
     setSubmitVisible(!deckHasCard);
   }
+
+  /* 讀取作答欄答案，同時記錄「你的答案」的每一位數字 */
   function readAnswerString(){
     const slots=[...answerSlotsEl.querySelectorAll(".slot")];
     const cards=slots.map(s=>s.querySelector(".card"));
     if(cards.some(c=>!c))return null;
-    return cards.map(c=>c.textContent).join("");
+    const digits=cards.map(c=>Number(c.textContent));
+    gameState.lastAnswerDigits=digits;
+    return digits.join("");
   }
 
   /* ==== Game flow ==== */
@@ -1475,7 +1523,7 @@
     }
   }
   function setTopbarText(){
-    const goalText=gameState.roundGoal==="max"?"排出最大的數":"排出最小的數";
+    const goalText=gameState.roundGoal==="max"?"請排出最大的數":"請排出最小的數";
     reqTextEl.textContent=goalText;
     timerEl.textContent=secondsText(gameState.remainingMs);
     roundPillEl.textContent=`第 ${gameState.roundIndex+1} 回合 / 共 3 回合`;
@@ -1495,7 +1543,7 @@
       timerEl.textContent=secondsText(left);
       if(left<=0){
         stopTimer();
-        endGame(false,"timeout","時間到，這一輪結束。");
+        endGame(false,"timeout","時間到，這一局遊戲結束。");
       }
     },120);
   }
@@ -1504,6 +1552,7 @@
     gameState.digits=randomUniqueDigits(4);
     gameState.roundGoal=Math.random()<0.5?"max":"min";
     gameState.limitSec=DIFF[gameState.diffKey].limits[gameState.roundIndex];
+    gameState.lastAnswerDigits=null;   // 新回合開始，尚未有玩家答案
     renderBoard(gameState.digits);
     gameState.remainingMs=gameState.limitSec*1000;
     setTopbarText();
@@ -1535,6 +1584,7 @@
     gameState.inGame=true;
     gameState.roundIndex=0;
     gameState.perRoundTimes=[];
+    gameState.lastAnswerDigits=null;
     switchScreen(true);
     timerEl.textContent="—秒";
     reqTextEl.textContent="—";
@@ -1544,19 +1594,30 @@
     startRoundCountdownTimer();
   }
 
-  function buildResultCardsHTML(goal,digits){
+  /* 新版：同時顯示「本回合數字牌」、「正確答案」、「你的答案」 */
+  function buildResultCardsHTML(goal,digits,playerDigits){
+    const baseDigits=digits;
     const correctDigits=computeAnswerDigits(goal,digits);
-    const used=digits.map(d=>`<div class="miniCard">${d}</div>`).join("");
-    const correct=correctDigits.map(d=>`<div class="miniCard">${d}</div>`).join("");
+    const usedHTML=baseDigits.map(d=>`<div class="miniCard">${d}</div>`).join("");
+    const correctHTML=correctDigits.map(d=>`<div class="miniCard">${d}</div>`).join("");
+    const playerHTML=playerDigits
+      ? playerDigits.map(d=>`<div class="miniCard">${d}</div>`).join("")
+      : "";
+
     return `
       <div class="resultBlock">
         <div class="resultLabel">本回合使用的數字牌</div>
-        <div class="cardRow">${used}</div>
+        <div class="cardRow">${usedHTML}</div>
       </div>
       <div class="resultBlock">
         <div class="resultLabel">正確答案</div>
-        <div class="cardRow">${correct}</div>
+        <div class="cardRow">${correctHTML}</div>
       </div>
+      ${playerDigits ? `
+      <div class="resultBlock">
+        <div class="resultLabel">你的答案</div>
+        <div class="cardRow">${playerHTML}</div>
+      </div>` : ""}
       <div style="height: var(--result-bottom-gap);"></div>
     `;
   }
@@ -1627,7 +1688,7 @@
       addRecord(record);
     }
 
-    const showCorrectCards=!win;
+    const showCards=!win;
     const body=`
       <div>
         ${reasonText?`<div style="margin-bottom:12px;">${reasonText}</div>`:""}
@@ -1642,7 +1703,9 @@
             ${formatTimesForEndModal(win?"win":endType)}
           </div>
         </div>
-        ${showCorrectCards?buildResultCardsHTML(gameState.roundGoal,gameState.digits):""}
+        ${showCards
+          ? buildResultCardsHTML(gameState.roundGoal,gameState.digits,gameState.lastAnswerDigits)
+          : ""}
       </div>
     `;
 
@@ -1679,15 +1742,15 @@
 
     if(ans===correct){
       if(gameState.roundIndex===2){
-        endGame(true,"win","三回合都答對了。");
+        endGame(true,"win","三個回合皆為正確答案。");
       }else{
-        showToast("答對了，進入下一回合",900);
+        showToast("答案正確，進入下一回合",900);
         gameState.roundIndex+=1;
         setupRound();
         startRoundCountdownTimer();
       }
     }else{
-      endGame(false,"wrong",`答案不對。你排的是 <strong>${ans}</strong>，正確答案是 <strong>${correct}</strong>。`);
+      endGame(false,"wrong",`答案不正確。排出的數字為 <strong>${ans}</strong>，正確答案為 <strong>${correct}</strong>。`);
     }
   }
 
@@ -1719,6 +1782,7 @@
   });
 
   helpBtnHome.addEventListener("click",()=>openHelp(0));
+  /* 遊戲中開啟說明時，預設從「上方題目與狀態欄」開始 */
   helpBtnGame.addEventListener("click",()=>openHelp(3));
 
   recordsBtnHome.addEventListener("click",showRecordsModalStandalone);
@@ -1727,7 +1791,7 @@
   leaveBtnGame.addEventListener("click",()=>{
     openModal({
       title:"離開遊戲",
-      bodyHTML:`<div>確定要離開遊戲回到主畫面嗎？<br/><span style="color:rgba(75,85,99,.95); font-weight:900;">這次不會記錄成績。</span></div>`,
+      bodyHTML:`<div>確定要離開遊戲並回到主畫面嗎？<br/><span style="color:rgba(75,85,99,.95); font-weight:900;">這一局將不會記錄成績。</span></div>`,
       actions:[
         {label:"取消",onClick:forceCloseModal},
         {label:"離開",primary:true,onClick:()=>{forceCloseModal(); leaveGame();}}
@@ -1761,7 +1825,7 @@
   setSubmitVisible(false);
   nudgeScaleSoon();
 
-  /* 一打開網頁就自動跳出遊戲說明 */
+  /* 一打開網頁就自動跳出遊戲說明（從第 1 頁開始） */
   setTimeout(()=>{
     if(!modalBackdrop.classList.contains("show")){
       openHelp(0);
